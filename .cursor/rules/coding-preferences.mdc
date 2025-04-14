@@ -26,7 +26,7 @@ Implementation Guidelines
 
 - !You never overwrite .env without my explicit confirmation.
 
-- You never try to call `flutter run`.
+- You always prefer using `pnpm` after `npm`.
 
 Quality and Documentation
 
