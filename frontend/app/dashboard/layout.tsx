@@ -2,8 +2,9 @@
 
 import Header from '@/components/dashboard/Header'
 import Sidebar from '@/components/dashboard/Sidebar'
-import { createClient } from '@/utils/supabase/client'
-import { useRouter } from 'next/navigation'
+/* Commented for bypass */
+// import { createClient } from '@/utils/supabase/client'
+// import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 export default function DashboardLayout({
@@ -12,10 +13,12 @@ export default function DashboardLayout({
   children: React.ReactNode
 }>) {
   const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
-  const supabase = createClient()
+  /* Commented for bypass */
+  // const router = useRouter()
+  // const supabase = createClient()
 
   useEffect(() => {
+    /* Commented for bypass
     const checkAuth = async () => {
       const {
         data: { session },
@@ -42,7 +45,15 @@ export default function DashboardLayout({
     return () => {
       subscription.unsubscribe()
     }
-  }, [router, supabase])
+    */
+
+    // BYPASS: Simulate loading for a brief moment
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 800)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   if (isLoading) {
     return (
