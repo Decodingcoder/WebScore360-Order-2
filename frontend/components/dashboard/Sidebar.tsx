@@ -111,7 +111,7 @@ export default function Sidebar() {
               }
               label="Audit History"
             />
-            <NavLink
+            {/* <NavLink
               href="/dashboard/account"
               icon={
                 <svg
@@ -150,7 +150,7 @@ export default function Sidebar() {
                 </svg>
               }
               label="Upgrade Plan"
-            />
+            /> */}
           </nav>
 
           <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">

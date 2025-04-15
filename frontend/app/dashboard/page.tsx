@@ -28,7 +28,7 @@ export default function Dashboard() {
   const [subscription, setSubscription] = useState<
     'free' | 'pro' | 'business_plus'
   >('free')
-  const [auditsRemaining, setAuditsRemaining] = useState(0)
+  const [auditsRemaining, setAuditsRemaining] = useState(1)
   const [latestAudit, setLatestAudit] = useState<Audit | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const supabase = createClient()

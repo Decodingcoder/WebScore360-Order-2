@@ -642,35 +642,6 @@ export default function PricingPage() {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <div className="mt-20 max-w-4xl mx-auto bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl shadow-lg overflow-hidden">
-          <div className="py-12 px-6 md:px-12 text-center text-white">
-            <h2 className="text-3xl font-bold mb-4">
-              Ready to analyze your website?
-            </h2>
-            <p className="text-xl mb-8 opacity-90">
-              Start with a free analysis and upgrade when you need more
-              features.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button
-                asChild
-                variant="default"
-                className="bg-white text-blue-600 hover:bg-blue-50"
-              >
-                <Link href="/login">Sign Up Free</Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white/10"
-              >
-                <Link href="/#pricing">Compare Plans</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
       </main>
 
       <footer className="bg-gray-100 dark:bg-gray-800 py-8 mt-12">
