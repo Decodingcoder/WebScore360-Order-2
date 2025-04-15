@@ -1,4 +1,5 @@
 import GoogleLoginButton from '@/components/GoogleLoginButton'
+import { Card, CardContent } from '@/components/ui/card'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -19,23 +20,27 @@ export default function LoginPage() {
       </header>
 
       <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center">
-        <div className="w-full max-w-md p-8 bg-white dark:bg-gray-800 rounded-xl shadow-md">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2">Welcome to WebScore360</h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Sign in to access your dashboard and reports
-            </p>
-          </div>
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8">
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold mb-2">
+                Welcome to WebScore360
+              </h1>
+              <p className="text-gray-600 dark:text-gray-300">
+                Sign in to access your dashboard and reports
+              </p>
+            </div>
 
-          <GoogleLoginButton />
+            <GoogleLoginButton />
 
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-center text-gray-500 dark:text-gray-400">
-              By continuing, you agree to WebScore360&apos;s Terms of Service
-              and Privacy Policy
-            </p>
-          </div>
-        </div>
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+                By continuing, you agree to WebScore360&apos;s Terms of Service
+                and Privacy Policy
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </main>
 
       <footer className="bg-gray-100 dark:bg-gray-800 py-8">

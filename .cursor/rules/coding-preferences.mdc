@@ -28,6 +28,8 @@ Implementation Guidelines
 
 - You always prefer using `pnpm` after `npm`.
 
+- You always prefer `shadcn` components over standard components.
+
 Quality and Documentation
 
 - After each major feature, generate a brief markdown doc in /docs/[feature].md and update /docs/overview.md.

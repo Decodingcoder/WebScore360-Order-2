@@ -82,4 +82,47 @@ To make changes to the database schema:
 - **Message Queue**: Redis
 - **PDF Generation**: Node.js library
 - **External APIs**: Google PageSpeed Insights API
-- **Storage**: Supabase Storage (for PDF reports) 
+- **Storage**: Supabase Storage (for PDF reports)
+
+# WebScore360 Docker Setup
+
+## Quick Start with Docker
+
+1. Create a `.env` file from the template:
+```bash
+cp .env.example .env
+```
+
+2. Fill in your Supabase and PageSpeed API credentials in the `.env` file.
+
+3. Start the services:
+```bash
+docker-compose up -d
+```
+
+4. Check the worker logs:
+```bash
+docker-compose logs -f worker
+```
+
+5. To stop the services:
+```bash
+docker-compose down
+```
+
+## Testing with Docker
+
+To manually push a test job to the queue:
+
+```bash
+# Connect to Redis container
+docker exec -it webscore360-redis redis-cli
+
+# Add a test job (inside Redis CLI)
+LPUSH website-analysis '{"websiteUrl":"https://example.com","userEmail":"test@example.com","auditId":"test-123"}'
+
+# Exit Redis CLI
+exit
+```
+
+The worker should pick up the job and start processing it. 

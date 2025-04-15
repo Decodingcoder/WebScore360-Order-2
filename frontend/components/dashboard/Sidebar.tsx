@@ -1,5 +1,6 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -153,8 +154,9 @@ export default function Sidebar() {
           </nav>
 
           <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-            <button
+            <Button
               onClick={handleSignOut}
+              variant="ghost"
               className="flex items-center gap-3 px-3 py-2 w-full text-left rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             >
               <svg
@@ -172,14 +174,16 @@ export default function Sidebar() {
                 />
               </svg>
               <span>Sign Out</span>
-            </button>
+            </Button>
           </div>
         </div>
       </aside>
 
       {/* Mobile toggle button */}
-      <button
+      <Button
         onClick={() => setIsOpen(!isOpen)}
+        variant="default"
+        size="icon"
         className="fixed bottom-4 right-4 z-30 md:hidden bg-blue-600 text-white p-3 rounded-full shadow-lg"
       >
         {isOpen ? (
@@ -213,7 +217,7 @@ export default function Sidebar() {
             />
           </svg>
         )}
-      </button>
+      </Button>
     </>
   )
 }

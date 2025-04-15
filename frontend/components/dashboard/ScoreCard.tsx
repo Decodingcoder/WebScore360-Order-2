@@ -1,5 +1,7 @@
 'use client'
 
+import { Card, CardContent } from '@/components/ui/card'
+
 interface ScoreCardProps {
   title: string
   score: number
@@ -19,14 +21,18 @@ export default function ScoreCard({
   }
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 flex flex-col items-center text-center">
-      <div
-        className={`h-12 w-12 rounded-full flex items-center justify-center text-white font-bold ${getColorClass()}`}
-      >
-        {Math.round(score)}
-      </div>
-      <h3 className="text-lg font-medium mt-2 mb-1">{title}</h3>
-      <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
-    </div>
+    <Card className="flex flex-col items-center text-center">
+      <CardContent className="pt-6">
+        <div
+          className={`h-12 w-12 rounded-full flex items-center justify-center text-white font-bold ${getColorClass()}`}
+        >
+          {Math.round(score)}
+        </div>
+        <h3 className="text-lg font-medium mt-2 mb-1">{title}</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {description}
+        </p>
+      </CardContent>
+    </Card>
   )
 }

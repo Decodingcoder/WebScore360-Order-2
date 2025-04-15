@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -16,12 +17,9 @@ export default function PricingPage() {
           <span className="text-xl font-bold">WebScore360</span>
         </Link>
         <nav className="flex gap-4">
-          <Link
-            href="/login"
-            className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
-          >
-            Login
-          </Link>
+          <Button asChild variant="outline">
+            <Link href="/login">Login</Link>
+          </Button>
         </nav>
       </header>
 
@@ -134,12 +132,9 @@ export default function PricingPage() {
                   <span>Priority support</span>
                 </li>
               </ul>
-              <Link
-                href="/login"
-                className="block text-center mt-8 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              >
-                Get Started Free
-              </Link>
+              <Button asChild variant="outline" className="w-full mt-8">
+                <Link href="/login">Get Started Free</Link>
+              </Button>
             </div>
           </div>
 
@@ -245,12 +240,13 @@ export default function PricingPage() {
                   <span>Priority email support</span>
                 </li>
               </ul>
-              <Link
-                href="/login"
-                className="block text-center mt-8 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              <Button
+                asChild
+                variant="default"
+                className="w-full mt-8 bg-blue-600 hover:bg-blue-700"
               >
-                Get Started with Pro
-              </Link>
+                <Link href="/login">Get Started with Pro</Link>
+              </Button>
             </div>
           </div>
 
@@ -353,12 +349,13 @@ export default function PricingPage() {
                   <span>Service discounts available</span>
                 </li>
               </ul>
-              <Link
-                href="/login"
-                className="block text-center mt-8 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              <Button
+                asChild
+                variant="default"
+                className="w-full mt-8 bg-purple-600 hover:bg-purple-700"
               >
-                Get Business+
-              </Link>
+                <Link href="/login">Get Business+</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -657,18 +654,20 @@ export default function PricingPage() {
               features.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link
-                href="/login"
-                className="inline-block px-6 py-3 bg-white text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-colors"
+              <Button
+                asChild
+                variant="default"
+                className="bg-white text-blue-600 hover:bg-blue-50"
               >
-                Sign Up Free
-              </Link>
-              <Link
-                href="/#pricing"
-                className="inline-block px-6 py-3 bg-transparent border-2 border-white text-white font-medium rounded-lg hover:bg-white/10 transition-colors"
+                <Link href="/login">Sign Up Free</Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white/10"
               >
-                Compare Plans
-              </Link>
+                <Link href="/#pricing">Compare Plans</Link>
+              </Button>
             </div>
           </div>
         </div>

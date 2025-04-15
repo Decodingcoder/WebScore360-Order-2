@@ -3,6 +3,8 @@
 import AnalyzeForm from '@/components/dashboard/AnalyzeForm'
 import AuditsList from '@/components/dashboard/AuditsList'
 import ScoreCard from '@/components/dashboard/ScoreCard'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
 
@@ -110,105 +112,126 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Subscription Info */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h2 className="text-lg font-semibold mb-1">
-              Your Plan:{' '}
-              <span className="capitalize">
-                {subscription.replace('_', ' ')}
-              </span>
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              {auditsRemaining}{' '}
-              {subscription === 'business_plus'
-                ? 'unlimited'
-                : `of ${subscription === 'pro' ? '30' : '1'}`}{' '}
-              audits remaining this month
-            </p>
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                Your Plan:{' '}
+                <span
+                  className={
+                    subscription === 'business_plus'
+                      ? 'text-purple-600 dark:text-purple-400'
+                      : subscription === 'pro'
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-gray-400'
+                  }
+                >
+                  {subscription === 'business_plus'
+                    ? 'Business+'
+                    : subscription === 'pro'
+                    ? 'Pro'
+                    : 'Free'}
+                </span>
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {auditsRemaining}{' '}
+                {subscription === 'business_plus'
+                  ? 'unlimited'
+                  : `of ${subscription === 'pro' ? '30' : '1'}`}{' '}
+                audits remaining this month
+              </p>
+            </div>
+            <Button
+              asChild
+              variant="default"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <a href="/pricing">Upgrade Plan</a>
+            </Button>
           </div>
-          <a
-            href="/pricing"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Upgrade Plan
-          </a>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Scores Section - Show only if has an audit */}
       {latestAudit && (
         <div className="space-y-4">
           <h2 className="text-xl font-bold">Latest Audit Results</h2>
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-            <div className="flex items-center gap-4 mb-4">
-              <div
-                className={`h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold ${getScoreColor(
-                  latestAudit.overall_score
-                )}`}
-              >
-                {Math.round(latestAudit.overall_score)}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4 mb-4">
+                <div
+                  className={`h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold ${getScoreColor(
+                    latestAudit.overall_score
+                  )}`}
+                >
+                  {Math.round(latestAudit.overall_score)}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    {latestAudit.website_url}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Analyzed on{' '}
+                    {new Date(latestAudit.created_at).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold">
-                  {latestAudit.website_url}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Analyzed on{' '}
-                  {new Date(latestAudit.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              <ScoreCard
-                title="Performance"
-                score={latestAudit.performance_score}
-                description="Page speed and technical aspects"
-              />
-              <ScoreCard
-                title="SEO"
-                score={latestAudit.seo_score}
-                description="Search engine optimization"
-              />
-              <ScoreCard
-                title="Conversion"
-                score={latestAudit.conversion_score}
-                description="Lead generation potential"
-              />
-              <ScoreCard
-                title="Branding"
-                score={latestAudit.branding_score}
-                description="Brand presentation and identity"
-              />
-              <ScoreCard
-                title="Presence"
-                score={latestAudit.presence_score}
-                description="Online presence and social media"
-              />
-            </div>
-          </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <ScoreCard
+                  title="Performance"
+                  score={latestAudit.performance_score}
+                  description="Page speed and technical aspects"
+                />
+                <ScoreCard
+                  title="SEO"
+                  score={latestAudit.seo_score}
+                  description="Search engine optimization"
+                />
+                <ScoreCard
+                  title="Conversion"
+                  score={latestAudit.conversion_score}
+                  description="Lead generation potential"
+                />
+                <ScoreCard
+                  title="Branding"
+                  score={latestAudit.branding_score}
+                  description="Brand presentation and identity"
+                />
+                <ScoreCard
+                  title="Presence"
+                  score={latestAudit.presence_score}
+                  description="Online presence and social media"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
       {/* New Analysis Form */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Analyze a Website</h2>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-          <AnalyzeForm
-            auditsRemaining={auditsRemaining}
-            subscription={subscription}
-          />
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <AnalyzeForm
+              auditsRemaining={auditsRemaining}
+              subscription={subscription}
+            />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recent Audits */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Recent Audits</h2>
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-          <AuditsList />
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <AuditsList />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

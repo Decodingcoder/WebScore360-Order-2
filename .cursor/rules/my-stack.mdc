@@ -10,3 +10,4 @@ Technical Stack
 *   Message Queue: Redis (e.g., Render Add-on or managed service)
 *   PDF Generation: Node.js library (e.g., Puppeteer for rendering HTML to PDF, or pdf-lib)
 *   External APIs: Google PageSpeed Insights API
+*   shadcn@2.3.0

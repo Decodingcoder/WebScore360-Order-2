@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:alpine
+    container_name: webscore360-redis
+    ports:
+      - "6379:6379"
+
+  worker:
+    build:
+      context: ./worker
+    container_name: webscore360-worker
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - PAGESPEED_API_KEY=${PAGESPEED_API_KEY}
+      - STORAGE_BUCKET=reports
+    depends_on:
+      - redis 
