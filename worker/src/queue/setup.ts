@@ -13,12 +13,10 @@ const ANALYSIS_QUEUE = 'website-analysis'
  * Sets up the Redis queue for job processing
  */
 export async function setupQueue(): Promise<Bull.Queue> {
-  const redisUrl = process.env.REDIS_URL
+  // Use REDIS_URL from environment, or fall back to local Redis if running in the same container
+  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
 
-  if (!redisUrl) {
-    logger.error('Redis URL not found in environment variables')
-    throw new Error('REDIS_URL environment variable is required')
-  }
+  logger.info(`Connecting to Redis at ${redisUrl.split('@').pop()}`)
 
   // Create Bull queue
   const queue = new Bull(ANALYSIS_QUEUE, redisUrl, {
