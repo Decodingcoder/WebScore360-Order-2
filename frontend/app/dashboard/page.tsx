@@ -5,6 +5,7 @@ import AuditsList from '@/components/dashboard/AuditsList'
 import ScoreCard from '@/components/dashboard/ScoreCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import UpgradeModal from '@/components/UpgradeModal'
 import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
 
@@ -31,6 +32,8 @@ export default function Dashboard() {
   const [auditsRemaining, setAuditsRemaining] = useState(1)
   const [latestAudit, setLatestAudit] = useState<Audit | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState<'Pro' | 'Business+'>('Pro')
   const supabase = createClient()
 
   useEffect(() => {
@@ -80,6 +83,12 @@ export default function Dashboard() {
     if (score >= 80) return 'bg-green-500'
     if (score >= 50) return 'bg-yellow-500'
     return 'bg-red-500'
+  }
+
+  // Open upgrade modal with specific plan
+  const openUpgradeModal = (plan: 'Pro' | 'Business+') => {
+    setSelectedPlan(plan)
+    setUpgradeModalOpen(true)
   }
 
   if (isLoading) {
@@ -142,13 +151,17 @@ export default function Dashboard() {
                 audits remaining this month
               </p>
             </div>
-            <Button
-              asChild
-              variant="default"
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <a href="/pricing">Upgrade Plan</a>
-            </Button>
+            {subscription !== 'business_plus' && (
+              <Button
+                variant="default"
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() =>
+                  openUpgradeModal(subscription === 'pro' ? 'Business+' : 'Pro')
+                }
+              >
+                Upgrade Plan
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -233,6 +246,13 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        planName={selectedPlan}
+      />
     </div>
   )
 }

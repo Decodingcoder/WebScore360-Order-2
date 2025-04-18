@@ -8,10 +8,11 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function HomeForm() {
-  const [websiteUrl, setWebsiteUrl] = useState('example.com')
+  const [websiteUrl, setWebsiteUrl] = useState('')
+  const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,39 +23,52 @@ export default function HomeForm() {
     setError(null)
 
     try {
-      // Basic URL validation - just make sure it's not empty
+      // Basic validation - check for empty fields
       if (!websiteUrl.trim()) {
         throw new Error('Please enter a website URL')
       }
 
-      // BYPASS: Skip audit creation and navigate directly to dashboard
-      console.log('Bypassing audit creation for URL:', websiteUrl)
-      router.push('/dashboard')
+      if (!email.trim()) {
+        throw new Error('Please enter your email address')
+      }
 
-      /* Commented for bypass
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address')
+      }
+
       // Validate URL format - allow domains without http/https
       let processedUrl = websiteUrl.trim()
-      
+
       // If URL doesn't start with http:// or https://, add https://
       if (!processedUrl.match(/^https?:\/\//)) {
         processedUrl = `https://${processedUrl}`
       }
-      
+
       // Check if it's a valid URL/domain format
-      if (!processedUrl.match(/^https?:\/\/[a-zA-Z0-9][-a-zA-Z0-9.]*\.[a-zA-Z]{2,}(?:\/.*)?$/)) {
+      if (
+        !processedUrl.match(
+          /^https?:\/\/[a-zA-Z0-9][-a-zA-Z0-9.]*\.[a-zA-Z]{2,}(?:\/.*)?$/
+        )
+      ) {
         throw new Error('Please enter a valid website URL or domain name')
       }
 
-      // MOCK: Simulate a successful form submission
-      console.log("Website to analyze:", processedUrl)
-      
-      // Simulate successful submission
+      // SIMULATE: API call to create audit
+      console.log('Website to analyze:', processedUrl)
+      console.log('Email to send report to:', email)
+
+      // Simulate email sending and show success state
       setTimeout(() => {
-        setSuccess(true)
+        setEmailSent(true)
         setIsLoading(false)
-        setWebsiteUrl('')
+
+        // After showing success message, redirect to login
+        setTimeout(() => {
+          router.push('/login')
+        }, 2500)
       }, 1500)
-      */
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'An unexpected error occurred'
@@ -63,7 +77,7 @@ export default function HomeForm() {
     }
   }
 
-  if (success) {
+  if (emailSent) {
     return (
       <div className="text-center py-8">
         <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -82,14 +96,11 @@ export default function HomeForm() {
             />
           </svg>
         </div>
-        <h3 className="text-xl font-semibold mb-2">Analysis Started!</h3>
+        <h3 className="text-xl font-semibold mb-2">Report Sent!</h3>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          We&apos;re analyzing your website. Your results will be available on
-          the dashboard shortly.
+          We&apos;ve emailed your website analysis report. Redirecting you to
+          sign in...
         </p>
-        <Button onClick={() => setSuccess(false)} variant="default">
-          Analyze Another Website
-        </Button>
       </div>
     )
   }
@@ -98,7 +109,7 @@ export default function HomeForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="websiteUrl" className="block text-sm font-medium mb-1">
-          Website URL
+          Website URL <span className="text-red-500">*</span>
         </label>
         <Input
           id="websiteUrl"
@@ -113,6 +124,23 @@ export default function HomeForm() {
         </p>
       </div>
 
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium mb-1">
+          Email Address <span className="text-red-500">*</span>
+        </label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <p className="mt-1 text-xs text-gray-500">
+          We&apos;ll send your report to this email address
+        </p>
+      </div>
+
       {error && (
         <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
           {error}
@@ -123,40 +151,14 @@ export default function HomeForm() {
         type="submit"
         disabled={isLoading}
         loading={isLoading}
-        variant="google"
         className="w-full"
       >
-        {!isLoading && (
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M18.1711 8.36788H17.4998V8.33329H9.99984V11.6666H14.7094C14.0223 13.607 12.1761 15 9.99984 15C7.23859 15 4.99984 12.7612 4.99984 10C4.99984 7.23871 7.23859 5 9.99984 5C11.2744 5 12.4344 5.48683 13.3169 6.28525L15.674 3.92821C14.1857 2.56954 12.1948 1.66663 9.99984 1.66663C5.39775 1.66663 1.6665 5.39787 1.6665 10C1.6665 14.6021 5.39775 18.3333 9.99984 18.3333C14.6019 18.3333 18.3332 14.6021 18.3332 10C18.3332 9.44217 18.2757 8.89792 18.1711 8.36788Z"
-              fill="#FFC107"
-            />
-            <path
-              d="M2.62744 6.12121L5.36536 8.12913C6.10619 6.29496 7.90036 5 9.99994 5C11.2745 5 12.4345 5.48683 13.317 6.28525L15.6741 3.92821C14.1857 2.56954 12.1949 1.66663 9.99994 1.66663C6.74994 1.66663 3.92077 3.48871 2.62744 6.12121Z"
-              fill="#FF3D00"
-            />
-            <path
-              d="M10.0001 18.3334C12.1522 18.3334 14.1063 17.4613 15.5855 16.14L13.0109 13.9875C12.1516 14.6452 11.0964 15.0009 10.0001 15C7.83427 15 5.99394 13.6179 5.2989 11.6892L2.58057 13.7829C3.8614 16.4517 6.7239 18.3334 10.0001 18.3334Z"
-              fill="#4CAF50"
-            />
-            <path
-              d="M18.171 8.36796H17.5V8.33337H10V11.6667H14.7097C14.3809 12.5902 13.7889 13.3972 13.0106 13.9876L13.0118 13.9867L15.5864 16.1392C15.4084 16.3004 18.3334 14.1667 18.3334 10C18.3334 9.44225 18.2759 8.898 18.171 8.36796Z"
-              fill="#1976D2"
-            />
-          </svg>
-        )}
-        <span>Sign in with Google</span>
+        {isLoading ? 'Analyzing...' : 'Get My Score'}
       </Button>
 
       <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-        Sign in to access your audits and dashboard. No credit card required.
+        By submitting, you&apos;ll receive your report via email and be
+        redirected to create an account.
       </p>
     </form>
   )

@@ -61,13 +61,12 @@ export default function Sidebar() {
         <div className="p-4 flex flex-col h-full">
           <div className="flex items-center gap-2 mb-8">
             <Image
-              src="/logo.svg"
+              src="/logo.png"
               alt="WebScore360 Logo"
-              width={32}
+              width={80}
               height={32}
-              className="w-8 h-8"
+              className="h-8 w-auto"
             />
-            <span className="text-xl font-bold">WebScore360</span>
           </div>
 
           <nav className="flex-1 space-y-1">

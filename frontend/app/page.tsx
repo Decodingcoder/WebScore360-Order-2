@@ -14,13 +14,12 @@ export default function Home() {
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Image
-              src="/logo.svg"
+              src="/logo.png"
               alt="WebScore360 Logo"
-              width={32}
+              width={80}
               height={32}
-              className="w-8 h-8"
+              className="h-8 w-auto"
             />
-            <span className="text-lg font-bold">WebScore360</span>
           </div>
           <nav className="flex gap-3">
             <Button variant="outline" size="sm" asChild>
@@ -254,11 +253,14 @@ export default function Home() {
                   <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/40 dark:to-indigo-900/40">
                     <h3 className="text-2xl font-bold">Pro</h3>
                     <div className="flex items-baseline mt-2">
-                      <span className="text-5xl font-extrabold">$19</span>
+                      <span className="text-5xl font-extrabold">$9</span>
                       <span className="ml-1 text-gray-500 dark:text-gray-400">
                         /month
                       </span>
                     </div>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                      or $81/year (save 25%)
+                    </p>
                     <p className="mt-4 text-gray-600 dark:text-gray-300">
                       For small businesses focused on growth.
                     </p>
@@ -343,11 +345,14 @@ export default function Home() {
                   <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/40 dark:to-pink-900/40">
                     <h3 className="text-2xl font-bold">Business+</h3>
                     <div className="flex items-baseline mt-2">
-                      <span className="text-5xl font-extrabold">$57</span>
+                      <span className="text-5xl font-extrabold">$38</span>
                       <span className="ml-1 text-gray-500 dark:text-gray-400">
                         /month
                       </span>
                     </div>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                      or $342/year (save 25%)
+                    </p>
                     <p className="mt-4 text-gray-600 dark:text-gray-300">
                       For agencies and growing businesses.
                     </p>
@@ -448,13 +453,12 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
               <Image
-                src="/logo.svg"
+                src="/logo.png"
                 alt="WebScore360 Logo"
-                width={30}
+                width={75}
                 height={30}
-                className="w-8 h-8"
+                className="h-8 w-auto"
               />
-              <span className="text-lg font-bold">WebScore360</span>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               &copy; {new Date().getFullYear()} WebScore360. All rights

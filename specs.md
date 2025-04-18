@@ -81,15 +81,15 @@ WebScore360 MVP - Detailed Specifications
 6. User Flow & Dashboard (v1 - Core Access):
 
 
-    Landing Page: User enters Website URL and Email -> Clicks "Get My Score".
+    Landing Page: User enters **required** Website URL and **required** Email -> Clicks "Get My Score".
 
-    Processing: Frontend shows a "Generating your report..." message. Backend API receives request, validates, creates initial record, pushes job to Redis queue.
+    Processing: Frontend shows a "Generating your report..." message. Backend API receives request, validates (ensuring both URL and Email are present), creates initial record, pushes job to Redis queue.
 
-    Worker: Render worker picks up job, performs analysis, calls PageSpeed API, calculates scores, saves results to Supabase DB (linked to email/URL), generates PDF, emails PDF using a transactional email service (e.g., SendGrid via Supabase).
+    Worker: Render worker picks up job, performs analysis, calls PageSpeed API, calculates scores, saves results to Supabase DB (linked to email/URL), generates PDF, **immediately emails the PDF** using a transactional email service (e.g., SendGrid via Supabase).
 
-    Email Received: User gets the PDF report. Email includes a prominent call-to-action button/link: "View Detailed Report & Fixes -> Login/Sign Up".
+    Email Received & Sign-up Prompt: User gets the PDF report. **After the email is confirmed sent (or with a slight delay), the user is redirected from the initial submission page to a Supabase-powered login/sign-up page.** The email also includes a prominent call-to-action button/link: "View Detailed Report & Fixes -> Login/Sign Up".
 
-    Login/Sign Up: Clicking the link takes the user to a Supabase-powered login page. Only Google Sign-In option is presented for MVP.
+    Login/Sign Up: Clicking the link (either from the redirect or the email) takes the user to the login page. Only Google Sign-In option is presented for MVP.
 
     Authentication: User authenticates via Google. Supabase Auth handles this. A new user record is created in the Supabase users table (or linked if email exists). A corresponding profiles table stores app-specific data (like subscription tier).
 
@@ -113,19 +113,19 @@ WebScore360 MVP - Detailed Specifications
         Dashboard shows scores & check results (pass/fail).
         Fix-It Guidance details are locked.
 
-    Pro Plan ($19/mo):
+    Pro Plan (**$9/mo** - Option for annual payment with 25% discount):
         Max 30 audits per month.
         Unlocks all Fix-It Guidance details ("What", "Why", "How") in the dashboard.
         Placeholder: Maybe adds a non-functional "Action Tracker" tab for future dev.
 
-    Business+ Plan ($57/mo):
+    Business+ Plan (**$38/mo** - Option for annual payment with 25% discount):
         Unlimited audits per month.
         Includes all Pro features.
         Placeholders: May add non-functional tabs/sections for "Competitor Benchmarks", "Priority Support", "Service Discounts".
 
-    Upgrade Flow: Clicking "Upgrade" buttons initiates the Stripe/Paddle checkout flow (requires integration in Next.js frontend and webhooks handled by a Supabase Edge Function or Render endpoint to update the user's subscription_tier in the DB).
+    Upgrade Flow: Clicking "Upgrade" buttons initiates the Stripe/Paddle checkout flow. **The checkout should present both monthly and annual (with discount) options if applicable.** Integration in Next.js frontend and webhooks handled by a Supabase Edge Function or Render endpoint to update the user's subscription_tier in the DB.
 
-    Annual/LTD: Defer implementation until post-MVP validation.
+    Annual/LTD: Defer full LTD implementation until post-MVP validation, but **implement the annual discount option during checkout for Pro and Business+**.
 
 
 8. Key Data Models (Supabase - Simplified):

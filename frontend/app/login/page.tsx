@@ -9,13 +9,12 @@ export default function LoginPage() {
       <header className="container mx-auto py-6 px-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/logo.svg"
+            src="/logo.png"
             alt="WebScore360 Logo"
-            width={40}
+            width={100}
             height={40}
-            className="w-10 h-10"
+            className="h-10 w-auto"
           />
-          <span className="text-xl font-bold">WebScore360</span>
         </Link>
       </header>
 
@@ -48,13 +47,12 @@ export default function LoginPage() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
               <Image
-                src="/logo.svg"
+                src="/logo.png"
                 alt="WebScore360 Logo"
-                width={30}
+                width={75}
                 height={30}
-                className="w-8 h-8"
+                className="h-8 w-auto"
               />
-              <span className="text-lg font-bold">WebScore360</span>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               &copy; {new Date().getFullYear()} WebScore360. All rights

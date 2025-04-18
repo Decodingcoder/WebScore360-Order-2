@@ -1,20 +1,33 @@
+'use client'
+
+import UpgradeModal from '@/components/UpgradeModal'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
 
 export default function PricingPage() {
+  const [isAnnual, setIsAnnual] = useState(false)
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState<'Pro' | 'Business+'>('Pro')
+
+  // Function to open the upgrade modal
+  const openUpgradeModal = (plan: 'Pro' | 'Business+') => {
+    setSelectedPlan(plan)
+    setUpgradeModalOpen(true)
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="container mx-auto py-6 px-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/logo.svg"
+            src="/logo.png"
             alt="WebScore360 Logo"
-            width={40}
+            width={100}
             height={40}
-            className="w-10 h-10"
+            className="h-10 w-auto"
           />
-          <span className="text-xl font-bold">WebScore360</span>
         </Link>
         <nav className="flex gap-4">
           <Button asChild variant="outline">
@@ -24,13 +37,49 @@ export default function PricingPage() {
       </header>
 
       <main className="flex-1 container mx-auto px-4 py-12">
-        <div className="max-w-3xl mx-auto text-center mb-16">
+        <div className="max-w-3xl mx-auto text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             Choose Your Plan
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300">
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
             Find the perfect plan for your website analysis needs
           </p>
+
+          {/* Billing toggle */}
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <span
+              className={`text-sm ${!isAnnual ? 'font-bold' : 'text-gray-500'}`}
+            >
+              Monthly
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className={`relative h-8 w-16 px-0 ${
+                isAnnual ? 'bg-blue-50 dark:bg-blue-900/30' : ''
+              }`}
+              onClick={() => setIsAnnual(!isAnnual)}
+            >
+              <span
+                className={`absolute inset-0 h-full w-1/2 rounded-md bg-blue-600 transition-all ${
+                  isAnnual ? 'translate-x-full -ml-1.5' : 'translate-x-0 ml-0.5'
+                }`}
+              />
+              <span className="sr-only">
+                {isAnnual
+                  ? 'Switch to monthly billing'
+                  : 'Switch to annual billing'}
+              </span>
+            </Button>
+            <span
+              className={`text-sm ${isAnnual ? 'font-bold' : 'text-gray-500'}`}
+            >
+              Annual{' '}
+              <span className="text-green-600 dark:text-green-400 font-medium">
+                (Save 25%)
+              </span>
+            </span>
+          </div>
         </div>
 
         {/* Pricing Cards */}
@@ -146,11 +195,22 @@ export default function PricingPage() {
             <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/40 dark:to-indigo-900/40">
               <h3 className="text-2xl font-bold">Pro</h3>
               <div className="flex items-baseline mt-2">
-                <span className="text-5xl font-extrabold">$19</span>
+                <span className="text-5xl font-extrabold">
+                  {isAnnual ? '$81' : '$9'}
+                </span>
                 <span className="ml-1 text-gray-500 dark:text-gray-400">
-                  /month
+                  {isAnnual ? '/year' : '/month'}
                 </span>
               </div>
+              {isAnnual ? (
+                <p className="mt-2 text-sm text-green-600 dark:text-green-400 font-medium">
+                  Save $27 per year
+                </p>
+              ) : (
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                  or $81/year (save 25%)
+                </p>
+              )}
               <p className="mt-4 text-gray-600 dark:text-gray-300">
                 For small businesses focused on growth.
               </p>
@@ -241,11 +301,11 @@ export default function PricingPage() {
                 </li>
               </ul>
               <Button
-                asChild
                 variant="default"
                 className="w-full mt-8 bg-blue-600 hover:bg-blue-700"
+                onClick={() => openUpgradeModal('Pro')}
               >
-                <Link href="/login">Get Started with Pro</Link>
+                Get Started with Pro
               </Button>
             </div>
           </div>
@@ -255,11 +315,22 @@ export default function PricingPage() {
             <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/40 dark:to-pink-900/40">
               <h3 className="text-2xl font-bold">Business+</h3>
               <div className="flex items-baseline mt-2">
-                <span className="text-5xl font-extrabold">$57</span>
+                <span className="text-5xl font-extrabold">
+                  {isAnnual ? '$342' : '$38'}
+                </span>
                 <span className="ml-1 text-gray-500 dark:text-gray-400">
-                  /month
+                  {isAnnual ? '/year' : '/month'}
                 </span>
               </div>
+              {isAnnual ? (
+                <p className="mt-2 text-sm text-green-600 dark:text-green-400 font-medium">
+                  Save $114 per year
+                </p>
+              ) : (
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                  or $342/year (save 25%)
+                </p>
+              )}
               <p className="mt-4 text-gray-600 dark:text-gray-300">
                 For agencies and growing businesses.
               </p>
@@ -350,11 +421,11 @@ export default function PricingPage() {
                 </li>
               </ul>
               <Button
-                asChild
                 variant="default"
                 className="w-full mt-8 bg-purple-600 hover:bg-purple-700"
+                onClick={() => openUpgradeModal('Business+')}
               >
-                <Link href="/login">Get Business+</Link>
+                Get Business+
               </Button>
             </div>
           </div>
@@ -649,13 +720,12 @@ export default function PricingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
               <Image
-                src="/logo.svg"
+                src="/logo.png"
                 alt="WebScore360 Logo"
-                width={30}
+                width={75}
                 height={30}
-                className="w-8 h-8"
+                className="h-8 w-auto"
               />
-              <span className="text-lg font-bold">WebScore360</span>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               &copy; {new Date().getFullYear()} WebScore360. All rights
@@ -664,6 +734,13 @@ export default function PricingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        planName={selectedPlan}
+      />
     </div>
   )
 }

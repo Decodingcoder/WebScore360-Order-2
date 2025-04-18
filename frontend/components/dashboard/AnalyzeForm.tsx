@@ -1,5 +1,6 @@
 'use client'
 
+import UpgradeModal from '@/components/UpgradeModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/utils/supabase/client'
@@ -18,9 +19,14 @@ export default function AnalyzeForm({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const supabase = createClient()
 
   const canRunAudit = subscription === 'business_plus' || auditsRemaining > 0
+
+  // Determine which plan to suggest for upgrade
+  const recommendedPlan: 'Pro' | 'Business+' =
+    subscription === 'pro' ? 'Business+' : 'Pro'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,68 +132,81 @@ export default function AnalyzeForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label
-          htmlFor="dashboard-websiteUrl"
-          className="block text-sm font-medium mb-1"
-        >
-          Website URL
-        </label>
-        <div className="flex gap-2">
-          <Input
-            id="dashboard-websiteUrl"
-            type="url"
-            placeholder="https://yourwebsite.com"
-            value={websiteUrl}
-            onChange={(e) => setWebsiteUrl(e.target.value)}
-            className="flex-1"
-            required
-            disabled={!canRunAudit || isLoading}
-          />
-          <Button
-            type="submit"
-            disabled={!canRunAudit || isLoading}
-            loading={isLoading}
-            variant="default"
-            className="bg-blue-600 hover:bg-blue-700"
+    <>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label
+            htmlFor="dashboard-websiteUrl"
+            className="block text-sm font-medium mb-1"
           >
-            {!isLoading && 'Analyze Now'}
-          </Button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-
-      {!canRunAudit && !error && (
-        <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg text-sm flex items-center gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+            Website URL
+          </label>
+          <div className="flex gap-2">
+            <Input
+              id="dashboard-websiteUrl"
+              type="url"
+              placeholder="https://yourwebsite.com"
+              value={websiteUrl}
+              onChange={(e) => setWebsiteUrl(e.target.value)}
+              className="flex-1"
+              required
+              disabled={!canRunAudit || isLoading}
             />
-          </svg>
-          <span>
-            You have no audits remaining.{' '}
-            <a href="/pricing" className="underline">
-              Upgrade your plan
-            </a>{' '}
-            to run more audits.
-          </span>
+            <Button
+              type="submit"
+              disabled={!canRunAudit || isLoading}
+              loading={isLoading}
+              variant="default"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {!isLoading && 'Analyze Now'}
+            </Button>
+          </div>
         </div>
-      )}
-    </form>
+
+        {error && (
+          <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        {!canRunAudit && !error && (
+          <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg text-sm flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+              />
+            </svg>
+            <span>
+              You have no audits remaining.{' '}
+              <Button
+                variant="link"
+                className="p-0 h-auto underline text-yellow-700 dark:text-yellow-300"
+                onClick={() => setUpgradeModalOpen(true)}
+              >
+                Upgrade your plan
+              </Button>{' '}
+              to run more audits.
+            </span>
+          </div>
+        )}
+      </form>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        planName={recommendedPlan}
+      />
+    </>
   )
 }
