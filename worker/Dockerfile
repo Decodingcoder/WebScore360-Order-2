@@ -21,9 +21,10 @@ COPY . .
 # Build the application
 RUN pnpm build
 
-# Create startup script
-RUN echo '#!/bin/sh\nredis-server --daemonize yes\nnode dist/index.js' > /app/start.sh && \
-  chmod +x /app/start.sh
+# Create a separate start script file instead of using echo
+RUN printf '#!/bin/sh\necho "Starting Redis server..."\nredis-server --daemonize yes\necho "Starting WebScore360 worker..."\nnode /app/dist/index.js\n' > /app/start.sh && \
+  chmod +x /app/start.sh && \
+  cat /app/start.sh
 
 # Command to run both Redis and the application
-CMD ["/app/start.sh"] 
+CMD ["/bin/sh", "/app/start.sh"] 
