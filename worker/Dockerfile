@@ -21,6 +21,9 @@ COPY . .
 # Build the application
 RUN pnpm build
 
+# Make sure assets are copied to dist directory
+RUN mkdir -p dist/assets && cp -r src/assets/* dist/assets/
+
 # Expose API port
 EXPOSE 3000
 

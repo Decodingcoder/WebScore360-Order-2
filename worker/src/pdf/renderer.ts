@@ -22,6 +22,18 @@ export async function renderPdfFromTemplate(
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
+    // Load and embed logo
+    let logoImage
+    try {
+      const logoPath = path.resolve(__dirname, '../assets/logo.png')
+      const logoBytes = fs.readFileSync(logoPath)
+      logoImage = await pdfDoc.embedPng(logoBytes)
+      logger.info('Logo embedded successfully')
+    } catch (logoError) {
+      logger.warn(`Could not load logo image: ${logoError}`)
+      // Continue without the logo
+    }
+
     // Add a page
     const page = pdfDoc.addPage([595.28, 841.89]) // A4 size
     const { width, height } = page.getSize()
@@ -29,6 +41,18 @@ export async function renderPdfFromTemplate(
     // Set initial position
     let y = height - 50
     const margin = 50
+
+    // Add logo if available
+    if (logoImage) {
+      const logoWidth = 120
+      const logoHeight = logoImage.height * (logoWidth / logoImage.width)
+      page.drawImage(logoImage, {
+        x: width - margin - logoWidth,
+        y: height - margin - logoHeight,
+        width: logoWidth,
+        height: logoHeight,
+      })
+    }
 
     // Add title
     page.drawText('WebScore360 Report', {
@@ -199,9 +223,17 @@ export async function renderPdfFromTemplate(
       y -= 15
     }
 
-    // Add footer
+    // Update footer to include the website URL
     page.drawText('© WebScore360', {
       x: margin,
+      y: 30,
+      size: 10,
+      font: helveticaFont,
+      color: rgb(0.5, 0.5, 0.5),
+    })
+
+    page.drawText('https://webscore360.io', {
+      x: width - margin - 120,
       y: 30,
       size: 10,
       font: helveticaFont,
