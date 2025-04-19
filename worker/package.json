@@ -4,8 +4,7 @@
   "description": "Background worker for WebScore360 website analysis",
   "main": "dist/index.js",
   "scripts": {
-    "copy-assets": "mkdir -p dist/pdf && cp src/pdf/template.html dist/pdf/",
-    "build": "tsc && npm run copy-assets",
+    "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "lint": "eslint . --ext .ts",
@@ -23,7 +22,6 @@
     "handlebars": "^4.7.7",
     "nodemailer": "^6.9.4",
     "pdf-lib": "^1.17.1",
-    "puppeteer": "^20.8.2",
     "redis": "^4.6.7",
     "uuid": "^11.1.0"
   },

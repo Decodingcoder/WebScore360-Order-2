@@ -1,78 +1,219 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import * as Handlebars from 'handlebars'
-import puppeteer from 'puppeteer'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { AnalysisResult } from '../analysis/analyzer'
 import { logger } from '../utils/logger'
 
 /**
- * Render PDF from HTML template
+ * Render PDF from data directly
  */
 export async function renderPdfFromTemplate(
   websiteUrl: string,
   analysisResult: AnalysisResult
 ): Promise<Buffer> {
   try {
-    logger.info(`Rendering PDF for ${websiteUrl} using HTML template`)
+    logger.info(`Generating PDF report for ${websiteUrl} using pdf-lib`)
 
-    // Log environment variables for debugging
-    logger.info(
-      `PUPPETEER_EXECUTABLE_PATH: ${
-        process.env.PUPPETEER_EXECUTABLE_PATH || 'not set'
-      }`
-    )
-    logger.info(`CHROME_PATH: ${process.env.CHROME_PATH || 'not set'}`)
-    logger.info(
-      `Attempting to find Chrome at: ${
-        process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser'
-      }`
-    )
+    // Create a new PDF document
+    const pdfDoc = await PDFDocument.create()
 
-    // Load the HTML template
-    const templatePath = path.resolve(__dirname, 'template.html')
-    const templateSource = fs.readFileSync(templatePath, 'utf-8')
+    // Add a font
+    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
-    // Compile the template
-    const template = Handlebars.compile(templateSource)
+    // Add a page
+    const page = pdfDoc.addPage([595.28, 841.89]) // A4 size
+    const { width, height } = page.getSize()
 
-    // Prepare template data
-    const templateData = prepareTemplateData(websiteUrl, analysisResult)
+    // Set initial position
+    let y = height - 50
+    const margin = 50
 
-    // Render HTML with data
-    const html = template(templateData)
-
-    // Launch puppeteer and generate PDF
-    const browser = await puppeteer.launch({
-      headless: true,
-      executablePath:
-        process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
-      ignoreDefaultArgs: ['--disable-extensions'],
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-      ],
+    // Add title
+    page.drawText('WebScore360 Report', {
+      x: margin,
+      y,
+      size: 24,
+      font: helveticaBold,
+      color: rgb(0.2, 0.4, 0.6),
     })
 
-    const page = await browser.newPage()
-    await page.setContent(html, { waitUntil: 'networkidle0' })
+    y -= 40
 
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '0', right: '0', bottom: '0', left: '0' },
+    // Add website URL
+    page.drawText(`Website: ${websiteUrl}`, {
+      x: margin,
+      y,
+      size: 12,
+      font: helveticaFont,
     })
 
-    await browser.close()
+    y -= 30
 
-    return pdfBuffer
+    // Add generation date
+    const generatedDate = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+
+    page.drawText(`Report generated on: ${generatedDate}`, {
+      x: margin,
+      y,
+      size: 12,
+      font: helveticaFont,
+    })
+
+    y -= 50
+
+    // Add overall score
+    page.drawText(`Overall Score: ${analysisResult.overallScore}`, {
+      x: margin,
+      y,
+      size: 16,
+      font: helveticaBold,
+      color: getScoreRgb(analysisResult.overallScore),
+    })
+
+    y -= 40
+
+    // Add category scores
+    page.drawText('Category Scores:', {
+      x: margin,
+      y,
+      size: 14,
+      font: helveticaBold,
+    })
+
+    y -= 30
+
+    // Draw each category score
+    const categories = [
+      { name: 'Performance', score: analysisResult.categoryScores.performance },
+      { name: 'SEO', score: analysisResult.categoryScores.seo },
+      { name: 'Conversion', score: analysisResult.categoryScores.conversion },
+      { name: 'Branding', score: analysisResult.categoryScores.branding },
+      {
+        name: 'Online Presence',
+        score: analysisResult.categoryScores.presence,
+      },
+    ]
+
+    for (const category of categories) {
+      page.drawText(`${category.name}: ${category.score}`, {
+        x: margin + 20,
+        y,
+        size: 12,
+        font: helveticaFont,
+        color: getScoreRgb(category.score),
+      })
+      y -= 20
+    }
+
+    y -= 30
+
+    // Add interpretation
+    let interpretation = ''
+    if (analysisResult.overallScore >= 80) {
+      interpretation =
+        "Your website is well-optimized overall. While you're performing strongly, there are still some opportunities for improvement in specific areas outlined in this report."
+    } else if (analysisResult.overallScore >= 50) {
+      interpretation =
+        "Your website needs some improvements to reach its full potential. We've identified several key areas where focused changes could significantly enhance your overall score."
+    } else {
+      interpretation =
+        'Your website requires significant improvements across multiple areas. This report highlights critical issues that need to be addressed to improve user experience and effectiveness.'
+    }
+
+    // Split interpretation text into lines to fit the page width
+    const maxWidth = width - margin * 2
+    const lines = splitTextToLines(interpretation, helveticaFont, 12, maxWidth)
+
+    page.drawText('Summary:', {
+      x: margin,
+      y,
+      size: 14,
+      font: helveticaBold,
+    })
+
+    y -= 25
+
+    // Draw each line of the interpretation
+    for (const line of lines) {
+      page.drawText(line, {
+        x: margin,
+        y,
+        size: 12,
+        font: helveticaFont,
+      })
+      y -= 18
+    }
+
+    y -= 30
+
+    // Add recommendations
+    const recommendations = generateRecommendationsList(analysisResult)
+
+    page.drawText('Key Recommendations:', {
+      x: margin,
+      y,
+      size: 14,
+      font: helveticaBold,
+    })
+
+    y -= 25
+
+    // Draw each recommendation
+    for (let i = 0; i < recommendations.length; i++) {
+      const rec = recommendations[i]
+
+      page.drawText(`${i + 1}. ${rec.title} (${rec.category})`, {
+        x: margin,
+        y,
+        size: 12,
+        font: helveticaBold,
+      })
+
+      y -= 20
+
+      // Split recommendation description into lines
+      const descLines = splitTextToLines(
+        rec.description,
+        helveticaFont,
+        12,
+        maxWidth - 20
+      )
+
+      for (const line of descLines) {
+        page.drawText(line, {
+          x: margin + 20,
+          y,
+          size: 12,
+          font: helveticaFont,
+        })
+        y -= 18
+      }
+
+      y -= 15
+    }
+
+    // Add footer
+    page.drawText('© WebScore360', {
+      x: margin,
+      y: 30,
+      size: 10,
+      font: helveticaFont,
+      color: rgb(0.5, 0.5, 0.5),
+    })
+
+    // Generate PDF bytes
+    const pdfBytes = await pdfDoc.save()
+
+    return Buffer.from(pdfBytes)
   } catch (error) {
-    logger.error(`Error rendering PDF from template: ${error}`)
+    logger.error(`Error generating PDF: ${error}`)
     throw new Error(
       `Failed to render PDF: ${
         error instanceof Error ? error.message : String(error)
@@ -82,108 +223,44 @@ export async function renderPdfFromTemplate(
 }
 
 /**
- * Prepare data for template rendering
+ * Helper function to get RGB color based on score
  */
-function prepareTemplateData(websiteUrl: string, result: AnalysisResult): any {
-  // Format date
-  const generatedDate = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+function getScoreRgb(score: number) {
+  if (score >= 80) return rgb(0.2, 0.8, 0.2) // Green
+  if (score >= 50) return rgb(0.9, 0.7, 0) // Yellow
+  return rgb(0.9, 0.2, 0) // Red
+}
 
-  // Get score classes and colors
-  const getScoreClass = (score: number) => {
-    if (score >= 80) return 'score-high'
-    if (score >= 50) return 'score-medium'
-    return 'score-low'
+/**
+ * Helper function to split text into lines that fit within maxWidth
+ */
+function splitTextToLines(
+  text: string,
+  font: any,
+  fontSize: number,
+  maxWidth: number
+): string[] {
+  const words = text.split(' ')
+  const lines: string[] = []
+  let currentLine = ''
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word
+    const width = font.widthOfTextAtSize(testLine, fontSize)
+
+    if (width <= maxWidth) {
+      currentLine = testLine
+    } else {
+      lines.push(currentLine)
+      currentLine = word
+    }
   }
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return '#33cc33' // Green
-    if (score >= 50) return '#e6b800' // Yellow
-    return '#e63300' // Red
+  if (currentLine) {
+    lines.push(currentLine)
   }
 
-  // Get category class name (for CSS)
-  const getCategoryClass = (category: string) => {
-    return category.toLowerCase().replace(' ', '')
-  }
-
-  // Generate interpretation text
-  let interpretation = ''
-  if (result.overallScore >= 80) {
-    interpretation =
-      "Your website is well-optimized overall. While you're performing strongly, there are still some opportunities for improvement in specific areas outlined in this report."
-  } else if (result.overallScore >= 50) {
-    interpretation =
-      "Your website needs some improvements to reach its full potential. We've identified several key areas where focused changes could significantly enhance your overall score."
-  } else {
-    interpretation =
-      'Your website requires significant improvements across multiple areas. This report highlights critical issues that need to be addressed to improve user experience and effectiveness.'
-  }
-
-  // Generate recommendations
-  const recommendations = generateRecommendationsList(result)
-
-  // Build the template data object
-  return {
-    websiteUrl,
-    generatedDate,
-    overallScore: result.overallScore,
-    overallScoreClass: getScoreClass(result.overallScore),
-    interpretation,
-
-    // Category scores
-    performanceScore: result.categoryScores.performance,
-    performanceScoreClass: getScoreClass(result.categoryScores.performance),
-    performanceColor: getScoreColor(result.categoryScores.performance),
-
-    seoScore: result.categoryScores.seo,
-    seoScoreClass: getScoreClass(result.categoryScores.seo),
-    seoColor: getScoreColor(result.categoryScores.seo),
-
-    conversionScore: result.categoryScores.conversion,
-    conversionScoreClass: getScoreClass(result.categoryScores.conversion),
-    conversionColor: getScoreColor(result.categoryScores.conversion),
-
-    brandingScore: result.categoryScores.branding,
-    brandingScoreClass: getScoreClass(result.categoryScores.branding),
-    brandingColor: getScoreColor(result.categoryScores.branding),
-
-    presenceScore: result.categoryScores.presence,
-    presenceScoreClass: getScoreClass(result.categoryScores.presence),
-    presenceColor: getScoreColor(result.categoryScores.presence),
-
-    // Recommendations (if available)
-    ...(recommendations.length > 0 && {
-      recommendation1_title: recommendations[0].title,
-      recommendation1_description: recommendations[0].description,
-      recommendation1_category: recommendations[0].category,
-      recommendation1_category_class: getCategoryClass(
-        recommendations[0].category
-      ),
-    }),
-
-    ...(recommendations.length > 1 && {
-      recommendation2_title: recommendations[1].title,
-      recommendation2_description: recommendations[1].description,
-      recommendation2_category: recommendations[1].category,
-      recommendation2_category_class: getCategoryClass(
-        recommendations[1].category
-      ),
-    }),
-
-    ...(recommendations.length > 2 && {
-      recommendation3_title: recommendations[2].title,
-      recommendation3_description: recommendations[2].description,
-      recommendation3_category: recommendations[2].category,
-      recommendation3_category_class: getCategoryClass(
-        recommendations[2].category
-      ),
-    }),
-  }
+  return lines
 }
 
 /**
