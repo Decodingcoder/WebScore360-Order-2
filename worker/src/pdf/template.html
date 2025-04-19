@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebScore360 Report - {{websiteUrl}}</title>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: 'Helvetica', 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #333;
+      line-height: 1.5;
+    }
+    
+    .page {
+      width: 210mm;
+      height: 297mm;
+      padding: 20mm;
+      margin: 0 auto;
+      box-sizing: border-box;
+      page-break-after: always;
+      position: relative;
+    }
+    
+    .header {
+      background-color: #345f8a;
+      color: white;
+      padding: 20px;
+      height: 70px;
+      margin: -20mm -20mm 30px -20mm;
+      position: relative;
+    }
+    
+    .footer {
+      position: absolute;
+      bottom: 20mm;
+      left: 20mm;
+      right: 20mm;
+      padding-top: 10px;
+      border-top: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      color: #888;
+      font-size: 10px;
+    }
+    
+    h1 {
+      font-size: 32px;
+      margin: 0;
+      padding: 0;
+    }
+    
+    h2 {
+      font-size: 24px;
+      margin: 0 0 20px 0;
+      color: #345f8a;
+    }
+    
+    h3 {
+      font-size: 18px;
+      margin: 15px 0;
+    }
+    
+    p {
+      margin: 10px 0;
+    }
+    
+    .logo {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    
+    .score-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 150px;
+      height: 150px;
+      margin: 20px auto;
+      background-color: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .score-value {
+      font-size: 50px;
+      font-weight: bold;
+      margin: 20px 0 10px 0;
+    }
+    
+    .score-label {
+      font-size: 14px;
+      text-align: center;
+    }
+    
+    .score-high {
+      color: #33cc33;
+    }
+    
+    .score-medium {
+      color: #e6b800;
+    }
+    
+    .score-low {
+      color: #e63300;
+    }
+    
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    
+    .table th {
+      background-color: #345f8a;
+      color: white;
+      text-align: left;
+      padding: 10px;
+    }
+    
+    .table td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .table tr:nth-child(even) {
+      background-color: #f8f8f8;
+    }
+    
+    .category-card {
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 20px;
+      display: flex;
+    }
+    
+    .category-score {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 22px;
+      color: white;
+      margin-right: 20px;
+      flex-shrink: 0;
+    }
+    
+    .category-content {
+      flex-grow: 1;
+    }
+    
+    .category-content h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    
+    .category-content p {
+      margin: 0;
+      font-size: 14px;
+    }
+    
+    .recommendation {
+      padding-left: 35px;
+      position: relative;
+      margin-bottom: 30px;
+    }
+    
+    .recommendation-number {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 25px;
+      height: 25px;
+      background-color: #345f8a;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    
+    .recommendation h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    
+    .recommendation p {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      font-size: 12px;
+      border-radius: 15px;
+      color: white;
+      font-weight: bold;
+    }
+    
+    .tag-performance {
+      background-color: #3399cc;
+    }
+    
+    .tag-seo {
+      background-color: #cc6633;
+    }
+    
+    .tag-conversion {
+      background-color: #9966cc;
+    }
+    
+    .tag-branding {
+      background-color: #66cc99;
+    }
+    
+    .tag-presence {
+      background-color: #cccc33;
+    }
+    
+    .cta-box {
+      background-color: #f0f5ff;
+      border: 1px solid #345f8a;
+      padding: 15px;
+      margin: 30px 0;
+      border-radius: 5px;
+      text-align: center;
+    }
+    
+    .cta-box h3 {
+      margin-top: 0;
+      color: #345f8a;
+    }
+    
+    .cta-box p {
+      font-size: 14px;
+    }
+    
+    .note-box {
+      background-color: #f0f5ff;
+      border: 1px solid #345f8a;
+      padding: 15px;
+      margin: 30px 0;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Cover Page -->
+  <div class="page">
+    <div style="background-color: #345f8a; margin: -20mm -20mm 30px -20mm; height: 120mm; padding: 20px;">
+      <h1 style="color: white; font-size: 42px; margin-top: 30px; padding-left: 20px;">WebScore360</h1>
+      <p style="color: white; font-size: 24px; margin-top: 10px; padding-left: 20px;">Website Analysis Report</p>
+      <hr style="border: 1px solid white; width: 90%; margin: 20px auto;">
+    </div>
+    
+    <div style="margin-top: 40px;">
+      <h3>Website:</h3>
+      <p>{{websiteUrl}}</p>
+      
+      <h3>Report generated on:</h3>
+      <p>{{generatedDate}}</p>
+      
+      <p style="margin-top: 50px; line-height: 1.6;">
+        This report provides a comprehensive analysis of your website, evaluating key areas including performance, SEO, conversion optimization, branding, and online presence. Use these insights to enhance your website's effectiveness and user experience.
+      </p>
+    </div>
+    
+    <div class="footer">
+      <div>© WebScore360</div>
+      <div>Page 1</div>
+    </div>
+  </div>
+  
+  <!-- Summary Page -->
+  <div class="page">
+    <div class="header">
+      <h2 style="color: white;">Overall Performance</h2>
+      <div class="logo">WebScore360</div>
+    </div>
+    
+    <div class="score-box">
+      <div class="score-label">Overall Score</div>
+      <div id="overallScore" class="score-value {{overallScoreClass}}">{{overallScore}}</div>
+    </div>
+    
+    <h3>Interpretation:</h3>
+    <p>{{interpretation}}</p>
+    
+    <h3>Category Scores:</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Performance</td>
+          <td class="{{performanceScoreClass}}">{{performanceScore}}</td>
+        </tr>
+        <tr>
+          <td>SEO</td>
+          <td class="{{seoScoreClass}}">{{seoScore}}</td>
+        </tr>
+        <tr>
+          <td>Conversion</td>
+          <td class="{{conversionScoreClass}}">{{conversionScore}}</td>
+        </tr>
+        <tr>
+          <td>Branding</td>
+          <td class="{{brandingScoreClass}}">{{brandingScore}}</td>
+        </tr>
+        <tr>
+          <td>Online Presence</td>
+          <td class="{{presenceScoreClass}}">{{presenceScore}}</td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <div class="cta-box">
+      <h3>Access your full report on the dashboard</h3>
+      <p>Visit: https://webscore360.com/login for detailed explanations and step-by-step fixes</p>
+    </div>
+    
+    <div class="footer">
+      <div>© WebScore360</div>
+      <div>Page 2</div>
+    </div>
+  </div>
+  
+  <!-- Detailed Scores Page -->
+  <div class="page">
+    <div class="header">
+      <h2 style="color: white;">Detailed Category Scores</h2>
+      <div class="logo">WebScore360</div>
+    </div>
+    
+    <div class="category-card">
+      <div class="category-score" style="background-color: {{performanceColor}};">{{performanceScore}}</div>
+      <div class="category-content">
+        <h3>Performance</h3>
+        <p>Measures how quickly your website loads and responds to user interactions.</p>
+      </div>
+    </div>
+    
+    <div class="category-card">
+      <div class="category-score" style="background-color: {{seoColor}};">{{seoScore}}</div>
+      <div class="category-content">
+        <h3>SEO</h3>
+        <p>Evaluates how well your site is optimized for search engines.</p>
+      </div>
+    </div>
+    
+    <div class="category-card">
+      <div class="category-score" style="background-color: {{conversionColor}};">{{conversionScore}}</div>
+      <div class="category-content">
+        <h3>Conversion</h3>
+        <p>Analyzes elements that impact visitor conversion into customers or leads.</p>
+      </div>
+    </div>
+    
+    <div class="category-card">
+      <div class="category-score" style="background-color: {{brandingColor}};">{{brandingScore}}</div>
+      <div class="category-content">
+        <h3>Branding</h3>
+        <p>Assesses the consistency and effectiveness of your brand presentation.</p>
+      </div>
+    </div>
+    
+    <div class="category-card">
+      <div class="category-score" style="background-color: {{presenceColor}};">{{presenceScore}}</div>
+      <div class="category-content">
+        <h3>Online Presence</h3>
+        <p>Evaluates your visibility across the web and social platforms.</p>
+      </div>
+    </div>
+    
+    <div class="note-box">
+      This report provides a high-level overview of your website's performance. Log in to your WebScore360 dashboard to access detailed findings for each category, including specific issues detected and actionable recommendations.
+    </div>
+    
+    <div class="footer">
+      <div>© WebScore360</div>
+      <div>Page 3</div>
+    </div>
+  </div>
+  
+  <!-- Recommendations Page -->
+  <div class="page">
+    <div class="header">
+      <h2 style="color: white;">Key Recommendations</h2>
+      <div class="logo">WebScore360</div>
+    </div>
+    
+    <p>Based on our analysis, we've identified the following priority recommendations to improve your website:</p>
+    
+    <!-- Recommendations list will be dynamically generated -->
+    <div id="recommendations-container">
+      <!-- Example recommendation -->
+      <div class="recommendation">
+        <div class="recommendation-number">1</div>
+        <h3>{{recommendation1_title}}</h3>
+        <p>{{recommendation1_description}}</p>
+        <div class="tag tag-{{recommendation1_category_class}}">{{recommendation1_category}}</div>
+      </div>
+      
+      <div class="recommendation">
+        <div class="recommendation-number">2</div>
+        <h3>{{recommendation2_title}}</h3>
+        <p>{{recommendation2_description}}</p>
+        <div class="tag tag-{{recommendation2_category_class}}">{{recommendation2_category}}</div>
+      </div>
+      
+      <div class="recommendation">
+        <div class="recommendation-number">3</div>
+        <h3>{{recommendation3_title}}</h3>
+        <p>{{recommendation3_description}}</p>
+        <div class="tag tag-{{recommendation3_category_class}}">{{recommendation3_category}}</div>
+      </div>
+    </div>
+    
+    <div class="cta-box">
+      <h3>Get your complete action plan</h3>
+      <p>Visit: https://webscore360.com/login for detailed step-by-step guidance</p>
+    </div>
+    
+    <div class="footer">
+      <div>© WebScore360</div>
+      <div>Page 4</div>
+    </div>
+  </div>
+</body>
+</html> 
