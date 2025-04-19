@@ -1,8 +1,11 @@
 import { Footer } from '@/components/Footer'
+import GoogleButtonSkeleton from '@/components/GoogleButtonSkeleton'
 import GoogleLoginButton from '@/components/GoogleLoginButton'
+import LoginErrorMessage from '@/components/LoginErrorMessage'
 import { Card, CardContent } from '@/components/ui/card'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
 export default function LoginPage() {
   return (
@@ -31,7 +34,13 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <GoogleLoginButton />
+            <Suspense fallback={<GoogleButtonSkeleton />}>
+              <GoogleLoginButton />
+            </Suspense>
+
+            <Suspense fallback={null}>
+              <LoginErrorMessage />
+            </Suspense>
 
             <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
               <p className="text-sm text-center text-gray-500 dark:text-gray-400">

@@ -2,21 +2,11 @@
 
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/utils/supabase/client'
-import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 export default function GoogleLoginButton() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const searchParams = useSearchParams()
-
-  useEffect(() => {
-    // Check for error message from redirect
-    const errorMsg = searchParams.get('error')
-    if (errorMsg) {
-      setError(errorMsg)
-    }
-  }, [searchParams])
 
   const handleSignIn = async () => {
     try {
