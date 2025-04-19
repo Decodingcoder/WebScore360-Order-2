@@ -1,3 +1,4 @@
+/// <reference types="express" />
 import dotenv from 'dotenv'
 import { setupQueue } from './queue/setup'
 import { logger } from './utils/logger'
@@ -27,11 +28,7 @@ async function main() {
     app.use(bodyParser.json())
 
     // Simple API key authentication middleware
-    const authenticate = (
-      req: express.Request,
-      res: express.Response,
-      next: express.NextFunction
-    ) => {
+    const authenticate = (req: any, res: any, next: any) => {
       const apiKey = req.headers['x-api-key']
       if (!apiKey || apiKey !== API_KEY) {
         return res.status(401).json({ error: 'Unauthorized' })
@@ -40,7 +37,7 @@ async function main() {
     }
 
     // API endpoint to add jobs to the queue
-    app.post('/api/jobs', authenticate, async (req, res) => {
+    app.post('/api/jobs', authenticate, async (req: any, res: any) => {
       try {
         const { auditId, websiteUrl, userEmail, userId } = req.body
 
