@@ -15,6 +15,19 @@ export async function renderPdfFromTemplate(
   try {
     logger.info(`Rendering PDF for ${websiteUrl} using HTML template`)
 
+    // Log environment variables for debugging
+    logger.info(
+      `PUPPETEER_EXECUTABLE_PATH: ${
+        process.env.PUPPETEER_EXECUTABLE_PATH || 'not set'
+      }`
+    )
+    logger.info(`CHROME_PATH: ${process.env.CHROME_PATH || 'not set'}`)
+    logger.info(
+      `Attempting to find Chrome at: ${
+        process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser'
+      }`
+    )
+
     // Load the HTML template
     const templatePath = path.resolve(__dirname, 'template.html')
     const templateSource = fs.readFileSync(templatePath, 'utf-8')
@@ -30,9 +43,20 @@ export async function renderPdfFromTemplate(
 
     // Launch puppeteer and generate PDF
     const browser = await puppeteer.launch({
-      headless: 'new',
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      headless: true,
+      executablePath:
+        process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
+      ignoreDefaultArgs: ['--disable-extensions'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu',
+      ],
     })
 
     const page = await browser.newPage()
