@@ -12,7 +12,7 @@ interface AnalyzeFormProps {
 }
 
 export default function AnalyzeForm({
-  auditsRemaining,
+  // auditsRemaining not used since we're bypassing auth checks
   subscription,
 }: AnalyzeFormProps) {
   const [websiteUrl, setWebsiteUrl] = useState('')
@@ -55,12 +55,11 @@ export default function AnalyzeForm({
 
       // TEMPORARY: Bypass authentication check
       // Use mock user data for testing
-      const mockUserId = '00000000-0000-0000-0000-000000000000'
       const mockEmail = 'test@example.com'
 
       // Create a new audit record without requiring auth
       const { error: insertError } = await supabase.from('audits').insert({
-        user_id: mockUserId, // Using mock user ID
+        user_id: null, // Set user_id to null to avoid foreign key constraint
         requested_email: mockEmail, // Using mock email
         website_url: websiteUrl,
         overall_score: null,
