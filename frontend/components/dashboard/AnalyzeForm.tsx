@@ -121,8 +121,8 @@ export default function AnalyzeForm({
         </div>
         <h3 className="text-xl font-semibold mb-2">Analysis Started!</h3>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          We&apos;re analyzing your website. You&apos;ll see results here
-          shortly.
+          We&apos;re analyzing your website. Your report will be available in
+          the dashboard shortly.
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Refreshing page in a moment...

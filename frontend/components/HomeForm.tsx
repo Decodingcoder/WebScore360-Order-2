@@ -96,10 +96,10 @@ export default function HomeForm() {
             />
           </svg>
         </div>
-        <h3 className="text-xl font-semibold mb-2">Report Sent!</h3>
+        <h3 className="text-xl font-semibold mb-2">Analysis Started!</h3>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          We&apos;ve emailed your website analysis report. Redirecting you to
-          sign in...
+          We&apos;re analyzing your website. Your report will be available in
+          your dashboard. Redirecting you to sign in...
         </p>
       </div>
     )
@@ -137,7 +137,7 @@ export default function HomeForm() {
           required
         />
         <p className="mt-1 text-xs text-gray-500">
-          We&apos;ll send your report to this email address
+          Your email is used for account creation
         </p>
       </div>
 
@@ -157,8 +157,8 @@ export default function HomeForm() {
       </Button>
 
       <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-        By submitting, you&apos;ll receive your report via email and be
-        redirected to create an account.
+        By submitting, you&apos;ll be redirected to create an account where you
+        can access your report.
       </p>
     </form>
   )

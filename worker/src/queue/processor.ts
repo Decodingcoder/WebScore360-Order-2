@@ -40,9 +40,11 @@ export async function processWebsiteAnalysis(job: Job<AnalysisJob>) {
     logger.info(`Updating audit with PDF URL: ${pdfUrl}`)
     await updateAuditWithPdfUrl(auditId, pdfUrl)
 
-    // Step 5: Send email with report
-    logger.info(`Sending email to ${userEmail}`)
-    await sendReportEmail(userEmail, websiteUrl, pdfUrl, analysisResult)
+    // REMOVED Step 5: Send email with report
+    // We're skipping email sending since we don't have SMTP credentials
+    logger.info(
+      `Skipping email sending to ${userEmail} due to lack of SMTP credentials`
+    )
 
     // Step 6: Update audit status to completed
     await updateAuditStatus(auditId, 'completed')
