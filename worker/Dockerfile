@@ -10,7 +10,7 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copy package files
-COPY package.json pnpm-lock.json* ./
+COPY package.json pnpm-lock.yaml* ./
 
 # Install dependencies
 RUN pnpm install
@@ -20,6 +20,9 @@ COPY . .
 
 # Build the application
 RUN pnpm build
+
+# Expose API port
+EXPOSE 3000
 
 # Create a separate start script file instead of using echo
 RUN printf '#!/bin/sh\necho "Starting Redis server..."\nredis-server --daemonize yes\necho "Starting WebScore360 worker..."\nnode /app/dist/index.js\n' > /app/start.sh && \
