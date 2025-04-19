@@ -227,41 +227,62 @@ async function recoverStalledJobs() {
     )
 
     // Get jobs that have stalled (processing but no heartbeat)
-    const { data, error } = await supabase
+    const { data: stalledJobs, error } = await supabase
       .from('audits')
-      .update({
-        status: 'pending',
-        processing_worker_id: null,
-        processing_started_at: null,
-        last_heartbeat: null,
-        retry_count: supabase.rpc('increment_retry_count', {}),
-      })
+      .select('*')
       .eq('status', 'processing')
       .lt('last_heartbeat', stalledThreshold.toISOString())
       .lt('retry_count', MAX_RETRY_COUNT)
-      .select()
 
     if (error) {
-      logger.error('Error recovering stalled jobs', { error })
+      logger.error('Error finding stalled jobs', { error })
       return
     }
 
-    if (data && data.length > 0) {
-      logger.info(`Recovered ${data.length} stalled jobs`)
+    // Update each stalled job individually to increment the retry count
+    if (stalledJobs && stalledJobs.length > 0) {
+      logger.info(`Found ${stalledJobs.length} stalled jobs to recover`)
 
-      // Mark jobs as failed if they've reached the retry limit
-      const { error: failedError } = await supabase
-        .from('audits')
-        .update({
-          status: 'failed',
-        })
-        .eq('status', 'processing')
-        .lt('last_heartbeat', stalledThreshold.toISOString())
-        .gte('retry_count', MAX_RETRY_COUNT)
+      for (const job of stalledJobs) {
+        const { error: updateError } = await supabase
+          .from('audits')
+          .update({
+            status: 'pending',
+            processing_worker_id: null,
+            processing_started_at: null,
+            last_heartbeat: null,
+            retry_count: supabase.rpc('increment_retry_count', {
+              current_count: job.retry_count,
+            }),
+          })
+          .eq('id', job.id)
 
-      if (failedError) {
-        logger.error('Error marking jobs as failed', { error: failedError })
+        if (updateError) {
+          logger.error(`Error recovering stalled job ${job.id}`, {
+            error: updateError,
+          })
+        } else {
+          logger.info(
+            `Recovered stalled job ${job.id}, retry count now ${
+              job.retry_count + 1
+            }`
+          )
+        }
       }
+    }
+
+    // Mark jobs as failed if they've reached the retry limit
+    const { error: failedError } = await supabase
+      .from('audits')
+      .update({
+        status: 'failed',
+      })
+      .eq('status', 'processing')
+      .lt('last_heartbeat', stalledThreshold.toISOString())
+      .gte('retry_count', MAX_RETRY_COUNT)
+
+    if (failedError) {
+      logger.error('Error marking jobs as failed', { error: failedError })
     }
   } catch (error) {
     logger.error('Error in stalled job recovery', { error })
