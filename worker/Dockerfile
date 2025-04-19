@@ -1,7 +1,18 @@
 FROM node:18-alpine
 
-# Install Redis
-RUN apk add --no-cache redis
+# Install Redis and dependencies for Puppeteer
+RUN apk add --no-cache \
+  redis \
+  chromium \
+  nss \
+  freetype \
+  harfbuzz \
+  ca-certificates \
+  ttf-freefont
+
+# Set environment variables for Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+  PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Set up working directory
 WORKDIR /app
