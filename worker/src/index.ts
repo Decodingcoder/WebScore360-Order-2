@@ -52,7 +52,12 @@ async function main() {
  * Handle graceful shutdown
  */
 async function handleGracefulShutdown() {
-  logger.info('Performing graceful shutdown...')
+  // Log shutdown context (Point 8)
+  logger.info(
+    `Performing graceful shutdown... ${
+      currentJobId ? `Current job ID: ${currentJobId}` : 'No active job.'
+    }`
+  )
 
   // Stop the heartbeat timer
   if (heartbeatInterval) {
@@ -76,6 +81,9 @@ async function handleGracefulShutdown() {
     } catch (error) {
       logger.error(`Failed to reset job status during shutdown`, { error })
     }
+  } else {
+    // Log if no job was active (Point 8 improvement)
+    logger.info('No active job to reset during shutdown.')
   }
 
   process.exit(0)
@@ -116,17 +124,23 @@ async function pollForJobs() {
       worker_id: WORKER_ID,
     })
 
+    // Log raw RPC response (Point 1)
+    logger.debug('Claim pending audit RPC response', { data, error })
+
     if (error) {
       logger.error('Error claiming pending audit', { error })
       isProcessing = false
       return
     }
 
-    // Process the job if found
-    if (data && data.id) {
-      const audit = data
+    // Process the job if found. RPC returns an array because of SETOF.
+    if (data && Array.isArray(data) && data.length > 0 && data[0].id) {
+      // Access the first element of the array
+      const audit = data[0]
       currentJobId = audit.id
 
+      // Log claim success (Point 2)
+      logger.debug(`Claim condition met for audit ${audit.id}`)
       logger.info(`Claimed audit ${audit.id} for ${audit.website_url}`)
 
       // Start heartbeat for this job
@@ -134,6 +148,8 @@ async function pollForJobs() {
 
       // Process the job
       try {
+        // Log before processing (Point 3)
+        logger.info(`Starting analysis process for audit: ${audit.id}`)
         await processWebsiteAnalysis({
           data: {
             auditId: audit.id,
@@ -146,7 +162,11 @@ async function pollForJobs() {
 
         logger.info(`Completed processing audit: ${audit.id}`)
       } catch (error) {
-        logger.error(`Error processing audit ${audit.id}`, { error })
+        // Log enhanced processing error (Point 4)
+        logger.error(
+          `Error during processWebsiteAnalysis for audit ${audit.id} (retry ${audit.retry_count})`,
+          { error }
+        )
 
         // Update status to failed if max retries reached
         await supabase
@@ -170,7 +190,8 @@ async function pollForJobs() {
         currentJobId = null
       }
     } else {
-      logger.debug('No pending audits found')
+      // Log claim failure reason (Point 2)
+      logger.debug('Claim condition not met, no job processed', { data })
     }
   } catch (error) {
     logger.error('Error in job polling', { error })
@@ -190,6 +211,8 @@ function startHeartbeat(auditId: string) {
 
   // Function to update heartbeat
   const updateHeartbeat = async () => {
+    // Log heartbeat attempt (Point 5)
+    logger.debug(`Attempting heartbeat update for audit ${auditId}`)
     try {
       const { error } = await supabase
         .from('audits')
@@ -203,6 +226,9 @@ function startHeartbeat(auditId: string) {
         logger.error(`Failed to update heartbeat for audit ${auditId}`, {
           error,
         })
+      } else {
+        // Log heartbeat success (Point 5 improvement)
+        logger.debug(`Heartbeat update successful for audit ${auditId}`)
       }
     } catch (error) {
       logger.error(`Error updating heartbeat`, { error })
@@ -242,10 +268,21 @@ async function recoverStalledJobs() {
     // Update each stalled job individually to increment the retry count
     if (stalledJobs && stalledJobs.length > 0) {
       logger.info(`Found ${stalledJobs.length} stalled jobs to recover`)
+      // Log stalled job IDs (Point 6)
+      logger.debug(
+        `Found stalled jobs with IDs: ${stalledJobs
+          .map((j) => j.id)
+          .join(', ')}`
+      )
 
       for (const job of stalledJobs) {
         // Calculate the new retry count directly
         const newRetryCount = (job.retry_count || 0) + 1
+
+        // Log recovery update attempt (Point 7)
+        logger.debug(
+          `Attempting to recover stalled job ${job.id} with new retry count ${newRetryCount}`
+        )
 
         const { error: updateError } = await supabase
           .from('audits')
