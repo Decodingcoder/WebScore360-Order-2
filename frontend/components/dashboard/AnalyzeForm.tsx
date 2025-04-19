@@ -22,7 +22,8 @@ export default function AnalyzeForm({
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const supabase = createClient()
 
-  const canRunAudit = subscription === 'business_plus' || auditsRemaining > 0
+  // TEMPORARY: Always allow running audits for testing
+  const canRunAudit = true // Bypass the limits while auth is disabled
 
   // Determine which plan to suggest for upgrade
   const recommendedPlan: 'Pro' | 'Business+' =
@@ -31,10 +32,11 @@ export default function AnalyzeForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!canRunAudit) {
-      setError('You have no audits remaining. Please upgrade your plan.')
-      return
-    }
+    // TEMPORARY: Skip this check while testing without auth
+    // if (!canRunAudit) {
+    //   setError('You have no audits remaining. Please upgrade your plan.')
+    //   return
+    // }
 
     setIsLoading(true)
     setError(null)
@@ -51,18 +53,15 @@ export default function AnalyzeForm({
         )
       }
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      // TEMPORARY: Bypass authentication check
+      // Use mock user data for testing
+      const mockUserId = '00000000-0000-0000-0000-000000000000'
+      const mockEmail = 'test@example.com'
 
-      if (!session) {
-        throw new Error('Authentication session expired. Please login again.')
-      }
-
-      // Create a new audit record
+      // Create a new audit record without requiring auth
       const { error: insertError } = await supabase.from('audits').insert({
-        user_id: session.user.id,
-        requested_email: session.user.email,
+        user_id: mockUserId, // Using mock user ID
+        requested_email: mockEmail, // Using mock email
         website_url: websiteUrl,
         overall_score: null,
         performance_score: null,
@@ -73,18 +72,11 @@ export default function AnalyzeForm({
         raw_data: {},
       })
 
-      if (insertError) throw new Error('Failed to submit your request')
+      if (insertError)
+        throw new Error('Failed to submit your request: ' + insertError.message)
 
-      // Update user's remaining audits if not on business_plus plan
-      if (subscription !== 'business_plus') {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ audits_remaining: auditsRemaining - 1 })
-          .eq('user_id', session.user.id)
-
-        if (updateError)
-          console.error('Failed to update remaining audits', updateError)
-      }
+      // Skip updating user's remaining audits since we're bypassing auth
+      // Just for testing, we'll consider that we have unlimited audits
 
       setSuccess(true)
       setWebsiteUrl('')
