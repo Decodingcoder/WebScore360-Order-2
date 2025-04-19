@@ -1,3 +1,4 @@
+import { Footer } from '@/components/Footer'
 import GoogleLoginButton from '@/components/GoogleLoginButton'
 import { Card, CardContent } from '@/components/ui/card'
 import Image from 'next/image'
@@ -42,25 +43,7 @@ export default function LoginPage() {
         </Card>
       </main>
 
-      <footer className="bg-gray-100 dark:bg-gray-800 py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center gap-2 mb-4 md:mb-0">
-              <Image
-                src="/logo.png"
-                alt="WebScore360 Logo"
-                width={75}
-                height={30}
-                className="h-8 w-auto"
-              />
-            </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              &copy; {new Date().getFullYear()} WebScore360. All rights
-              reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
