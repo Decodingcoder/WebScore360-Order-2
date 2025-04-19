@@ -4,7 +4,8 @@
   "description": "Background worker for WebScore360 website analysis",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "copy-assets": "mkdir -p dist/pdf && cp src/pdf/template.html dist/pdf/",
+    "build": "tsc && npm run copy-assets",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "lint": "eslint . --ext .ts",
