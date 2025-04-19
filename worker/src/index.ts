@@ -244,6 +244,9 @@ async function recoverStalledJobs() {
       logger.info(`Found ${stalledJobs.length} stalled jobs to recover`)
 
       for (const job of stalledJobs) {
+        // Calculate the new retry count directly
+        const newRetryCount = (job.retry_count || 0) + 1
+
         const { error: updateError } = await supabase
           .from('audits')
           .update({
@@ -251,9 +254,8 @@ async function recoverStalledJobs() {
             processing_worker_id: null,
             processing_started_at: null,
             last_heartbeat: null,
-            retry_count: supabase.rpc('increment_retry_count', {
-              current_count: job.retry_count,
-            }),
+            // Use the calculated count
+            retry_count: newRetryCount,
           })
           .eq('id', job.id)
 
@@ -262,10 +264,9 @@ async function recoverStalledJobs() {
             error: updateError,
           })
         } else {
+          // Log the new calculated count
           logger.info(
-            `Recovered stalled job ${job.id}, retry count now ${
-              job.retry_count + 1
-            }`
+            `Recovered stalled job ${job.id}, retry count now ${newRetryCount}`
           )
         }
       }
