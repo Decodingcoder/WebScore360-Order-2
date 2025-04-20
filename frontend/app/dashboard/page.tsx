@@ -3,7 +3,13 @@
 import AnalyzeForm from '@/components/dashboard/AnalyzeForm'
 import ScoreCard from '@/components/dashboard/ScoreCard'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -22,7 +28,7 @@ import {
 } from '@/components/ui/table'
 import { createClient } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import { FileDown } from 'lucide-react'
+import { FileDown, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -36,12 +42,12 @@ interface Audit {
   requested_email: string
   website_url: string
   created_at: string
-  overall_score: number
-  performance_score: number
-  seo_score: number
-  conversion_score: number
-  branding_score: number
-  presence_score: number
+  overall_score: number | null
+  performance_score: number | null
+  seo_score: number | null
+  conversion_score: number | null
+  branding_score: number | null
+  presence_score: number | null
   report_pdf_url: string | null
   raw_data: Record<string, unknown>
 }
@@ -156,7 +162,12 @@ export default function Dashboard() {
   }, [supabase, router])
 
   // Helper function to render traffic light color based on score
-  const getScoreColor = (score: number) => {
+  const getScoreColor = (score: number | null) => {
+    // Handle null case
+    if (score === null) {
+      return 'bg-gray-400 dark:bg-gray-600' // Default color for null/processing
+    }
+    // Existing logic for actual scores
     if (score >= 80) return 'bg-green-500'
     if (score >= 50) return 'bg-yellow-500'
     return 'bg-red-500'
@@ -266,77 +277,157 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Scores Section - Show only if has an audit */}
-      {latestAudit && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold">Latest Audit Results</h2>
+      {/* Latest Audit Section (Conditional Rendering) */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold">Latest Audit Results</h2>
+        {(() => {
+          // Handle loading state first (handled globally, but good practice here too)
+          if (isLoading) {
+            return (
+              <Card>
+                <CardContent className="p-4 h-48 flex justify-center items-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </CardContent>
+              </Card>
+            )
+          }
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start gap-4 mb-6">
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold ${getScoreColor(
-                      latestAudit.overall_score
-                    )} shrink-0`}
-                  >
-                    {Math.round(latestAudit.overall_score)}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      {latestAudit.website_url}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Analyzed on{' '}
-                      {new Date(latestAudit.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                {latestAudit.report_pdf_url && (
-                  <Button variant="outline" size="sm" asChild className="mt-1">
-                    <a
-                      href={latestAudit.report_pdf_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download
+          // Handle no audit case
+          if (!latestAudit) {
+            return (
+              <Card>
+                <CardContent className="p-4 text-center text-muted-foreground">
+                  You haven&apos;t analyzed any websites yet. Run your first
+                  analysis below!
+                </CardContent>
+              </Card>
+            )
+          }
+
+          // Handle processing state (scores are null)
+          // TODO: Add check for a specific 'failed' status if available
+          if (latestAudit.overall_score === null) {
+            return (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Analysis In Progress
+                  </CardTitle>
+                  <CardDescription>
+                    Started on{' '}
+                    {new Date(latestAudit.created_at).toLocaleDateString()}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6 flex flex-col items-center justify-center space-y-3 text-center">
+                  <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+                  <p className="font-medium">Processing analysis for:</p>
+                  <p className="text-muted-foreground break-all">
+                    {latestAudit.website_url}
+                  </p>
+                  <p className="text-sm text-muted-foreground pt-2">
+                    This may take a few minutes. The results will appear here
+                    automatically.
+                  </p>
+                </CardContent>
+              </Card>
+            )
+          }
+
+          // *** Placeholder for Failed State ***
+          // if (latestAudit.status === 'failed') { // Or however failure is determined
+          //   return (
+          //     <Card>
+          //       <CardHeader className="flex flex-row items-center space-x-3 bg-destructive/10">
+          //         <AlertTriangle className="w-6 h-6 text-destructive" />
+          //         <div className="flex flex-col">
+          //            <CardTitle className="text-destructive">Analysis Failed</CardTitle>
+          //             <CardDescription>For: {latestAudit.website_url}</CardDescription>
+          //          </div>
+          //        </CardHeader>
+          //       <CardContent className="p-4 text-center text-destructive">
+          //         Something went wrong during the analysis. Please try again or contact support.
+          //       </CardContent>
+          //     </Card>
+          //   )
+          // }
+
+          // Handle completed state (render score cards)
+          return (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start gap-4 mb-6">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold ${getScoreColor(
+                        latestAudit.overall_score // Pass potentially null score
+                      )} shrink-0`}
                     >
-                      Download Report
-                    </a>
-                  </Button>
-                )}
-              </div>
+                      {/* Render score, check for null just in case */}
+                      {latestAudit.overall_score !== null
+                        ? Math.round(latestAudit.overall_score)
+                        : '-'}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold break-all">
+                        {latestAudit.website_url}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Analyzed on{' '}
+                        {new Date(latestAudit.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  {latestAudit.report_pdf_url && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="mt-1"
+                    >
+                      <a
+                        href={latestAudit.report_pdf_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                      >
+                        Download Report
+                      </a>
+                    </Button>
+                  )}
+                </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
-                <ScoreCard
-                  title="Performance"
-                  score={latestAudit.performance_score}
-                  description="Page speed and technical aspects"
-                />
-                <ScoreCard
-                  title="SEO"
-                  score={latestAudit.seo_score}
-                  description="Search engine optimization"
-                />
-                <ScoreCard
-                  title="Conversion"
-                  score={latestAudit.conversion_score}
-                  description="Lead generation potential"
-                />
-                <ScoreCard
-                  title="Branding"
-                  score={latestAudit.branding_score}
-                  description="Brand presentation and identity"
-                />
-                <ScoreCard
-                  title="Presence"
-                  score={latestAudit.presence_score}
-                  description="Online presence and social media"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
+                  <ScoreCard
+                    title="Performance"
+                    score={latestAudit.performance_score}
+                    description="Page speed and technical aspects"
+                  />
+                  <ScoreCard
+                    title="SEO"
+                    score={latestAudit.seo_score}
+                    description="Search engine optimization"
+                  />
+                  <ScoreCard
+                    title="Conversion"
+                    score={latestAudit.conversion_score}
+                    description="Lead generation potential"
+                  />
+                  <ScoreCard
+                    title="Branding"
+                    score={latestAudit.branding_score}
+                    description="Brand presentation and identity"
+                  />
+                  <ScoreCard
+                    title="Presence"
+                    score={latestAudit.presence_score}
+                    description="Online presence and social media"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })()}
+      </div>
 
       {/* New Analysis Form */}
       <div className="space-y-4">
