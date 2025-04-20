@@ -7,24 +7,37 @@ export async function GET(request: Request) {
   const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
+    // Create a minimal Supabase client for the code exchange only
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get() {
-            return '' // Not needed for callback
-          },
-          set() {},
-          remove() {},
+          get: () => '',
+          set: () => {},
+          remove: () => {},
         },
       }
     )
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+
+    try {
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      if (!error) {
+        return NextResponse.redirect(`${origin}${next}`)
+      }
+      // If there's an error, redirect with error message
+      console.error('Authentication error:', error.message)
+      return NextResponse.redirect(
+        `${origin}/login?error=${encodeURIComponent(error.message)}`
+      )
+    } catch (err) {
+      console.error('Unexpected auth error:', err)
+      return NextResponse.redirect(
+        `${origin}/login?error=unexpected-auth-error`
+      )
     }
   }
-  // On error, redirect to login with error message
-  return NextResponse.redirect(`${origin}/login?error=auth-callback`)
+
+  // Missing code parameter
+  return NextResponse.redirect(`${origin}/login?error=missing-code-parameter`)
 }

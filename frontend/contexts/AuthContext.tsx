@@ -15,6 +15,18 @@ type AuthContextType = {
   session: Session | null
   isLoading: boolean
   signOut: () => Promise<void>
+  signInWithEmail: (
+    email: string,
+    password: string
+  ) => Promise<{
+    error: Error | null
+  }>
+  signUpWithEmail: (
+    email: string,
+    password: string
+  ) => Promise<{
+    error: Error | null
+  }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -63,11 +75,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      return { error }
+    } catch (error) {
+      console.error('Error signing in with email:', error)
+      return {
+        error:
+          error instanceof Error
+            ? error
+            : new Error('Unknown error during sign in'),
+      }
+    }
+  }
+
+  const signUpWithEmail = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      return { error }
+    } catch (error) {
+      console.error('Error signing up with email:', error)
+      return {
+        error:
+          error instanceof Error
+            ? error
+            : new Error('Unknown error during sign up'),
+      }
+    }
+  }
+
   const value = {
     user,
     session,
     isLoading,
     signOut,
+    signInWithEmail,
+    signUpWithEmail,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
