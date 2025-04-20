@@ -242,10 +242,14 @@ export default function Dashboard() {
                 </span>
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                {auditsRemaining}{' '}
-                {subscription === 'business_plus'
-                  ? 'unlimited'
-                  : `of ${subscription === 'pro' ? '30' : '1'}`}{' '}
+                {/* Conditionally render count only if not business_plus */}
+                {subscription !== 'business_plus' && (
+                  <>
+                    {auditsRemaining}{' '}
+                    {`of ${subscription === 'pro' ? '30' : '1'}`}{' '}
+                  </>
+                )}
+                {subscription === 'business_plus' && 'Unlimited '}
                 audits remaining this month
               </p>
             </div>
