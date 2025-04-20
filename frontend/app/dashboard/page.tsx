@@ -12,11 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { FileDown } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 // Force dynamic rendering for this authenticated page
@@ -50,6 +51,19 @@ export default function Dashboard() {
   const supabase = createClient()
   const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { toast } = useToast()
+
+  useEffect(() => {
+    if (searchParams.get('upgraded') === 'true') {
+      toast({
+        title: 'Upgrade Successful!',
+        description: 'Your plan has been upgraded.',
+        variant: 'default',
+      })
+      router.replace('/dashboard', { scroll: false })
+    }
+  }, [searchParams, router, toast])
 
   useEffect(() => {
     const fetchUserData = async () => {
