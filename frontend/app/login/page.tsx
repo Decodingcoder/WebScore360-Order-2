@@ -3,6 +3,7 @@
 import AuthForm from '@/components/AuthForm'
 import { Footer } from '@/components/Footer'
 import LoginErrorMessage from '@/components/LoginErrorMessage'
+import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Suspense } from 'react'
@@ -10,19 +11,26 @@ import { Suspense } from 'react'
 export default function LoginPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="container mx-auto py-6 px-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/logo.png"
-            alt="WebScore360 Logo"
-            width={100}
-            height={40}
-            className="h-10 w-auto"
-          />
-        </Link>
+      <header className="fixed top-0 left-0 right-0 backdrop-blur-sm bg-white/70 dark:bg-gray-900/70 z-50 py-4 px-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="container mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="WebScore360 Logo"
+              width={80}
+              height={32}
+              className="h-8 w-auto"
+            />
+          </div>
+          <nav className="flex gap-3">
+            <Button size="sm" asChild>
+              <Link href="#pricing">Pricing</Link>
+            </Button>
+          </nav>
+        </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center">
+      <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center pt-28">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold mb-2">Welcome to WebScore360</h1>
