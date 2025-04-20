@@ -26,15 +26,6 @@ export const createClient = () => {
         autoRefreshToken: true,
         detectSessionInUrl: true,
       },
-      // Add global fetch options for better cookie handling
-      global: {
-        fetch: (url, options) => {
-          return fetch(url, {
-            ...options,
-            credentials: 'include',
-          })
-        },
-      },
     }
   )
   return supabaseInstance
