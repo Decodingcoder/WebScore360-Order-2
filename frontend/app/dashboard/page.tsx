@@ -6,7 +6,7 @@ import ScoreCard from '@/components/dashboard/ScoreCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import UpgradeModal from '@/components/UpgradeModal'
-import { createClient } from '@/utils/supabase/client'
+import { useSupabase } from '@/hooks/useSupabase'
 import { useEffect, useState } from 'react'
 
 interface Audit {
@@ -34,7 +34,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<'Pro' | 'Business+'>('Pro')
-  const supabase = createClient()
+  const supabase = useSupabase()
 
   useEffect(() => {
     const fetchUserData = async () => {

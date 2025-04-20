@@ -1,6 +1,6 @@
 'use client'
 
-import { createClient } from '@/utils/supabase/client'
+import { useSupabase } from '@/hooks/useSupabase'
 import { Session, User } from '@supabase/supabase-js'
 import {
   createContext,
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useSupabase()
 
   useEffect(() => {
     const initializeAuth = async () => {

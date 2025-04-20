@@ -1,32 +1,21 @@
 'use client'
 
-import { createClient } from '@/utils/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
-// This component handles listening to Supabase auth changes client-side
-// primarily for SIGNED_OUT events.
+// This component listens for SIGNED_OUT events and redirects to login page
 export default function AuthListener() {
   const router = useRouter()
-  const supabase = createClient()
+  const { session } = useAuth()
 
   useEffect(() => {
-    // Set up auth state change listener
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
-      // Only handle SIGNED_OUT events
-      if (event === 'SIGNED_OUT') {
-        // Only redirect if not already on login page
-        if (window.location.pathname !== '/login') {
-          router.push('/login')
-        }
-      }
-    })
-
-    // Cleanup listener on component unmount
-    return () => {
-      authListener?.subscription.unsubscribe()
+    // Only handle navigation to login when session becomes null
+    // (which happens on sign out in the AuthContext)
+    if (session === null && window.location.pathname !== '/login') {
+      router.push('/login')
     }
-  }, [supabase, router])
+  }, [session, router])
 
   // This component doesn't render anything itself
   return null

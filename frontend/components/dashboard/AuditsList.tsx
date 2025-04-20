@@ -1,6 +1,6 @@
 'use client'
 
-import { createClient } from '@/utils/supabase/client'
+import { useSupabase } from '@/hooks/useSupabase'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -14,7 +14,7 @@ interface Audit {
 export default function AuditsList() {
   const [audits, setAudits] = useState<Audit[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useSupabase()
 
   useEffect(() => {
     const fetchAudits = async () => {

@@ -3,7 +3,7 @@
 import UpgradeModal from '@/components/UpgradeModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { createClient } from '@/utils/supabase/client'
+import { useSupabase } from '@/hooks/useSupabase'
 import { useState } from 'react'
 
 interface AnalyzeFormProps {
@@ -20,7 +20,7 @@ export default function AnalyzeForm({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
-  const supabase = createClient()
+  const supabase = useSupabase()
 
   // TEMPORARY: Always allow running audits for testing
   const canRunAudit = true // Bypass the limits while auth is disabled

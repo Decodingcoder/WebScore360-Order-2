@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/contexts/AuthContext'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -10,10 +11,16 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+  const { signOut } = useAuth()
 
-  const handleSignOut = () => {
-    // MOCK: Bypass actual sign out, just redirect to home
-    router.push('/')
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      router.push('/')
+      router.refresh()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
   }
 
   const NavLink = ({
