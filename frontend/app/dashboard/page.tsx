@@ -468,7 +468,7 @@ export default function Dashboard() {
                     ))}
                   </TableBody>
                 </Table>
-                <div className="text-sm text-gray-500 dark:text-gray-400 px-3 py-3">
+                <div className="text-sm text-gray-500 dark:text-gray-400 px-2 py-3">
                   Showing {recentAudits.length} of {totalAudits} audits.{' '}
                   {totalAudits > recentAudits.length && (
                     <Link

@@ -55,20 +55,28 @@ export default function HomeForm() {
         throw new Error('Please enter a valid website URL or domain name')
       }
 
-      // SIMULATE: API call to create audit
-      console.log('Website to analyze:', processedUrl)
-      console.log('Email to send report to:', email)
+      // Call the API to create the audit record
+      const response = await fetch('/api/audits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ websiteUrl: processedUrl, email }),
+      })
 
-      // Simulate email sending and show success state
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to start analysis')
+      }
+
+      // API call was successful, proceed with UI update and redirect
+      setEmailSent(true)
+      setIsLoading(false)
+
+      // After showing success message, redirect to login
       setTimeout(() => {
-        setEmailSent(true)
-        setIsLoading(false)
-
-        // After showing success message, redirect to login
-        setTimeout(() => {
-          router.push('/login')
-        }, 2500)
-      }, 1500)
+        router.push('/login')
+      }, 2500) // Keep the delay as per current behaviour
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'An unexpected error occurred'
