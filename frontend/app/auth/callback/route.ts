@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 
 // This route handler is specifically for the server-side authentication flow.
@@ -31,15 +31,37 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     console.log('Auth callback - Attempting code exchange...')
-    const supabase = createClient()
+
+    // Create Supabase client *specifically for Route Handler context*
+    const cookieStore = request.cookies // Get cookies from the request
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set() {
+            // No-op for Route Handler context in this flow
+          },
+          remove() {
+            // No-op for Route Handler context in this flow
+          },
+        },
+      }
+    )
+
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
       console.log('Auth callback - Code exchange successful. Redirecting...')
-      // Redirect to the specified path or dashboard after successful authentication.
+      // exchangeCodeForSession handles setting the session cookie on success.
+      // The redirect carries the session cookie to the browser.
       return NextResponse.redirect(`${siteUrl}${next}`)
     } else {
       console.error('Auth callback - Code exchange failed:', error.message)
+      // Log the specific error to understand PKCE/OAuth issues
     }
   } else {
     console.log(
