@@ -249,34 +249,46 @@ function UpgradePageContent() {
                   <CardContent className="space-y-4">
                     <ul className="list-disc list-inside space-y-1 text-sm">
                       <li>30 audits per month</li>
-                      <li>Comprehensive fix-it guidance</li>
-                      <li>Priority email support</li>
+                      <li>Unlock all Fix-It Guidance details</li>
                     </ul>
+                    <div className="space-y-2">
+                      {/* Monthly Pro */}
+                      <Button
+                        onClick={() => handlePlanChange(PRICE_IDS.pro.monthly)}
+                        disabled={
+                          isProcessing === PRICE_IDS.pro.monthly ||
+                          (subscription === 'pro' &&
+                            !stripeSubscriptionId?.includes('yr')) // Disable if already on monthly Pro
+                        }
+                        className="w-full"
+                      >
+                        {isProcessing === PRICE_IDS.pro.monthly
+                          ? 'Processing...'
+                          : subscription === 'pro' &&
+                            !stripeSubscriptionId?.includes('yr')
+                          ? 'Current Plan'
+                          : '$9/month'}
+                      </Button>
+                      {/* Yearly Pro */}
+                      <Button
+                        onClick={() => handlePlanChange(PRICE_IDS.pro.yearly)}
+                        disabled={
+                          isProcessing === PRICE_IDS.pro.yearly ||
+                          (subscription === 'pro' &&
+                            stripeSubscriptionId?.includes('yr')) // Disable if already on yearly Pro
+                        }
+                        className="w-full"
+                        variant="outline"
+                      >
+                        {isProcessing === PRICE_IDS.pro.yearly
+                          ? 'Processing...'
+                          : subscription === 'pro' &&
+                            stripeSubscriptionId?.includes('yr')
+                          ? 'Current Plan'
+                          : 'Pay Annually & Save 25%'}
+                      </Button>
+                    </div>
                   </CardContent>
-                  <div className="space-y-2 p-6 pt-0 mt-auto">
-                    <Button
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      // Call handlePlanChange with the correct price ID
-                      onClick={() => handlePlanChange(PRICE_IDS.pro.monthly)}
-                      // Use isProcessing state
-                      disabled={isProcessing !== null}
-                    >
-                      {/* Check if this specific button is processing */}
-                      {isProcessing === PRICE_IDS.pro.monthly
-                        ? 'Processing...'
-                        : '$9 / month'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => handlePlanChange(PRICE_IDS.pro.yearly)}
-                      disabled={isProcessing !== null}
-                    >
-                      {isProcessing === PRICE_IDS.pro.yearly
-                        ? 'Processing...'
-                        : '$81 / year (Save 25%)'}
-                    </Button>
-                  </div>
                 </Card>
               )}
 
@@ -288,37 +300,41 @@ function UpgradePageContent() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <ul className="list-disc list-inside space-y-1 text-sm">
-                    <li>Unlimited audits</li>
-                    <li>Advanced AI analysis features</li>
-                    <li>Dedicated account manager</li>
-                    <li>API Access (coming soon)</li>
+                    <li>Unlimited audits per month</li>
+                    <li>All Pro features included</li>
+                    <li>Priority Support (Placeholder)</li>
+                    <li>Competitor Benchmarks (Placeholder)</li>
                   </ul>
+                  <div className="space-y-2">
+                    {/* Monthly Business+ */}
+                    <Button
+                      onClick={() =>
+                        handlePlanChange(PRICE_IDS.business_plus.monthly)
+                      }
+                      disabled={
+                        isProcessing === PRICE_IDS.business_plus.monthly
+                      }
+                      className="w-full"
+                    >
+                      {isProcessing === PRICE_IDS.business_plus.monthly
+                        ? 'Processing...'
+                        : '$38/month'}
+                    </Button>
+                    {/* Yearly Business+ */}
+                    <Button
+                      onClick={() =>
+                        handlePlanChange(PRICE_IDS.business_plus.yearly)
+                      }
+                      disabled={isProcessing === PRICE_IDS.business_plus.yearly}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      {isProcessing === PRICE_IDS.business_plus.yearly
+                        ? 'Processing...'
+                        : 'Pay Annually & Save 25%'}
+                    </Button>
+                  </div>
                 </CardContent>
-                <div className="space-y-2 p-6 pt-0 mt-auto">
-                  <Button
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                    onClick={() =>
-                      handlePlanChange(PRICE_IDS.business_plus.monthly)
-                    }
-                    disabled={isProcessing !== null}
-                  >
-                    {isProcessing === PRICE_IDS.business_plus.monthly
-                      ? 'Processing...'
-                      : '$49 / month'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() =>
-                      handlePlanChange(PRICE_IDS.business_plus.yearly)
-                    }
-                    disabled={isProcessing !== null}
-                  >
-                    {isProcessing === PRICE_IDS.business_plus.yearly
-                      ? 'Processing...'
-                      : '$468 / year (Save 25%)'}
-                  </Button>
-                </div>
               </Card>
             </CardContent>
           </Card>
