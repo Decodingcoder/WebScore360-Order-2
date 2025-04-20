@@ -107,6 +107,6 @@ export const config = {
     '/reports/:path*',
     '/account/:path*',
     '/login',
-    '/auth/session-handler/:path*',
+    '/auth/callback',
   ],
 }
