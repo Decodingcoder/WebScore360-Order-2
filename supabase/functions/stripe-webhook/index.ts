@@ -135,12 +135,23 @@ serve(async (req: Request) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       )
 
+      // Determine the correct audit count for the new tier
+      let newAuditCount: number | null
+      if (newTier === 'pro') {
+        newAuditCount = 30 // Pro plan gets 30 audits
+      } else if (newTier === 'business_plus') {
+        newAuditCount = null // Represent unlimited with null (or a very high number)
+      } else {
+        newAuditCount = 1 // Default to free plan limit if needed
+      }
+
       // Update the user's profile
       const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({
           subscription_tier: newTier,
           stripe_customer_id: stripeCustomerId,
+          audits_remaining: newAuditCount, // Set the audit count
         })
         .eq('id', userId)
 
@@ -149,7 +160,9 @@ serve(async (req: Request) => {
       }
 
       console.log(
-        `Successfully updated profile for user ${userId} to ${newTier}`
+        `Successfully updated profile for user ${userId} to ${newTier} with ${
+          newAuditCount === null ? 'unlimited' : newAuditCount
+        } audits.`
       )
     } catch (dbError) {
       console.error(
@@ -218,6 +231,7 @@ serve(async (req: Request) => {
           .from('profiles')
           .update({
             subscription_tier: 'free',
+            audits_remaining: 1, // Reset audits to free plan limit
             // Optionally clear stripe_customer_id or set an end date
             // stripe_customer_id: null,
           })

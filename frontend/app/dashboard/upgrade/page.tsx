@@ -215,7 +215,7 @@ function UpgradePageContent() {
             <CardContent className="grid gap-6 md:grid-cols-2 pt-6">
               {/* Pro Plan Card - Conditionally rendered based on current plan */}
               {subscription === 'free' && (
-                <Card className="flex flex-col justify-between">
+                <Card className="flex flex-col justify-between h-full">
                   <CardHeader>
                     <CardTitle>Pro Plan</CardTitle>
                   </CardHeader>
@@ -251,7 +251,7 @@ function UpgradePageContent() {
               )}
 
               {/* Business+ Plan Card */}
-              <Card className="flex flex-col justify-between">
+              <Card className="flex flex-col justify-between h-full">
                 <CardHeader>
                   <CardTitle>Business+ Plan</CardTitle>
                 </CardHeader>
