@@ -37,7 +37,27 @@ export async function updateSession(request: NextRequest) {
 
   const {
     data: { user },
+    error: getUserError,
   } = await supabase.auth.getUser()
+
+  // --- START: Link audits after successful user retrieval ---
+  if (user && !getUserError) {
+    // We have a logged-in user, try to link their audits.
+    // Important: We need to call the RPC function here.
+    // The supabase client created by createServerClient uses the ANON key by default,
+    // but RPC calls might respect the SECURITY DEFINER context of the function if set.
+    // If this fails due to permissions, we might need a service role client here too.
+    const { error: rpcError } = await supabase.rpc('link_audits_to_user', {
+      user_id_input: user.id,
+      user_email_input: user.email,
+    })
+
+    if (rpcError) {
+      // Log the error, but don't block the user's session setup
+      console.error('Error calling link_audits_to_user:', rpcError)
+    }
+  }
+  // --- END: Link audits ---
 
   if (
     !user &&
