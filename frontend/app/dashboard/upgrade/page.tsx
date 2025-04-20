@@ -219,34 +219,34 @@ function UpgradePageContent() {
                   <CardHeader>
                     <CardTitle>Pro Plan</CardTitle>
                   </CardHeader>
-                  <CardContent className="flex flex-col flex-grow space-y-4">
+                  <CardContent className="space-y-4">
                     <ul className="list-disc list-inside space-y-1 text-sm">
                       <li>30 audits per month</li>
                       <li>Comprehensive fix-it guidance</li>
                       <li>Priority email support</li>
                     </ul>
-                    <div className="space-y-2 mt-auto">
-                      <Button
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                        onClick={() => handleCheckout(PRICE_IDS.pro.monthly)}
-                        disabled={isRedirecting !== null}
-                      >
-                        {isRedirecting === PRICE_IDS.pro.monthly
-                          ? 'Processing...'
-                          : '$9 / month'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => handleCheckout(PRICE_IDS.pro.yearly)}
-                        disabled={isRedirecting !== null}
-                      >
-                        {isRedirecting === PRICE_IDS.pro.yearly
-                          ? 'Processing...'
-                          : '$81 / year (Save 25%)'}
-                      </Button>
-                    </div>
                   </CardContent>
+                  <div className="space-y-2 p-6 pt-0 mt-auto">
+                    <Button
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={() => handleCheckout(PRICE_IDS.pro.monthly)}
+                      disabled={isRedirecting !== null}
+                    >
+                      {isRedirecting === PRICE_IDS.pro.monthly
+                        ? 'Processing...'
+                        : '$9 / month'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => handleCheckout(PRICE_IDS.pro.yearly)}
+                      disabled={isRedirecting !== null}
+                    >
+                      {isRedirecting === PRICE_IDS.pro.yearly
+                        ? 'Processing...'
+                        : '$81 / year (Save 25%)'}
+                    </Button>
+                  </div>
                 </Card>
               )}
 
@@ -255,39 +255,39 @@ function UpgradePageContent() {
                 <CardHeader>
                   <CardTitle>Business+ Plan</CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-col flex-grow space-y-4">
+                <CardContent className="space-y-4">
                   <ul className="list-disc list-inside space-y-1 text-sm">
                     <li>Unlimited audits</li>
                     <li>All Pro features included</li>
                     <li>Competitor benchmarking (future)</li>
                     <li>Priority support (future)</li>
                   </ul>
-                  <div className="space-y-2 mt-auto">
-                    <Button
-                      className="w-full bg-purple-600 hover:bg-purple-700"
-                      onClick={() =>
-                        handleCheckout(PRICE_IDS.business_plus.monthly)
-                      }
-                      disabled={isRedirecting !== null}
-                    >
-                      {isRedirecting === PRICE_IDS.business_plus.monthly
-                        ? 'Processing...'
-                        : '$38 / month'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() =>
-                        handleCheckout(PRICE_IDS.business_plus.yearly)
-                      }
-                      disabled={isRedirecting !== null}
-                    >
-                      {isRedirecting === PRICE_IDS.business_plus.yearly
-                        ? 'Processing...'
-                        : '$342 / year (Save 25%)'}
-                    </Button>
-                  </div>
                 </CardContent>
+                <div className="space-y-2 p-6 pt-0 mt-auto">
+                  <Button
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    onClick={() =>
+                      handleCheckout(PRICE_IDS.business_plus.monthly)
+                    }
+                    disabled={isRedirecting !== null}
+                  >
+                    {isRedirecting === PRICE_IDS.business_plus.monthly
+                      ? 'Processing...'
+                      : '$38 / month'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() =>
+                      handleCheckout(PRICE_IDS.business_plus.yearly)
+                    }
+                    disabled={isRedirecting !== null}
+                  >
+                    {isRedirecting === PRICE_IDS.business_plus.yearly
+                      ? 'Processing...'
+                      : '$342 / year (Save 25%)'}
+                  </Button>
+                </div>
               </Card>
             </CardContent>
           </Card>
