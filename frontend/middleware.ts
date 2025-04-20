@@ -21,6 +21,18 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  const pathname = request.nextUrl.pathname
+
+  // Check if the current route is public or matches any public route prefix
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  )
+
+  // Skip auth check for public routes to avoid unnecessary API calls
+  if (isPublicRoute && pathname !== '/login') {
+    return response
+  }
+
   // Create a Supabase client for auth checks
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,13 +40,20 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         get(name: string) {
-          return request.cookies.get(name)?.value
+          const cookie = request.cookies.get(name)?.value
+          return cookie
         },
         set(name: string, value: string, options) {
+          // Make sure cookies are set with same attributes as client-side
           response.cookies.set({
             name,
             value,
             ...options,
+            sameSite: 'lax',
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 60 * 60 * 24 * 7, // 1 week
+            path: '/',
           })
         },
         remove(name: string, options) {
@@ -42,6 +61,7 @@ export async function middleware(request: NextRequest) {
             name,
             value: '',
             ...options,
+            maxAge: -1,
           })
         },
       },
@@ -53,12 +73,18 @@ export async function middleware(request: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  const pathname = request.nextUrl.pathname
+  // Special handling for dashboard - check browser cookies directly as a fallback
+  if (pathname.startsWith('/dashboard') && !session) {
+    // Look for session in cookies as a backup
+    const hasSessionCookie =
+      request.cookies.has('supabase-auth-token') ||
+      request.cookies.has('sb-auth-token')
 
-  // Check if the current route is public or matches any public route prefix
-  const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  )
+    // If we find auth cookies, allow access and let client handle auth
+    if (hasSessionCookie) {
+      return response
+    }
+  }
 
   // If not authenticated and trying to access a protected route, redirect to login
   if (!session && !isPublicRoute) {

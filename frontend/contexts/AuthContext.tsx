@@ -50,25 +50,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // This effect fetches the initial session once on mount
   useEffect(() => {
+    let mounted = true
+
+    // Add session detection to the window focus event for better refresh handling
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          const {
+            data: { session: currentSession },
+          } = await supabase.auth.getSession()
+          if (mounted && currentSession) {
+            console.log('Visibility changed, updating session')
+            setSession(currentSession)
+            setUser(currentSession.user)
+          }
+        } catch (error) {
+          console.error('Error refreshing session on visibility change:', error)
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     const initializeAuth = async () => {
       try {
+        console.log('Initializing auth')
         const {
           data: { session },
         } = await supabase.auth.getSession()
 
-        if (session) {
-          setSession(session)
-          setUser(session.user)
+        if (mounted) {
+          if (session) {
+            console.log('Initial session found')
+            setSession(session)
+            setUser(session.user)
+          } else {
+            console.log('No initial session found')
+          }
+          setIsLoading(false)
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
-      } finally {
-        // Set loading to false only after initialization completes
-        setIsLoading(false)
+        if (mounted) {
+          setIsLoading(false)
+        }
       }
     }
 
     initializeAuth()
+
+    return () => {
+      mounted = false
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [supabase])
 
   // This effect sets up the auth state change listener
