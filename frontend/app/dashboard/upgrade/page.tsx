@@ -142,13 +142,16 @@ export default function UpgradePage() {
               <Card className="flex flex-col justify-between">
                 <CardHeader>
                   <CardTitle>Pro Plan</CardTitle>
-                  <p className="text-sm text-gray-500">$49/month</p>
+                  <p className="text-sm text-gray-500">$9/month</p>
+                  <p className="text-xs text-gray-400">
+                    or $81/year (save 25%)
+                  </p>
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <ul className="list-disc list-inside space-y-1 text-sm">
                     <li>30 audits per month</li>
-                    <li>Priority support</li>
-                    <li>Advanced reporting features</li>
+                    <li>Comprehensive fix-it guidance</li>
+                    <li>Priority email support</li>
                   </ul>
                 </CardContent>
                 <div className="p-4 pt-0">
@@ -165,14 +168,15 @@ export default function UpgradePage() {
             <Card className="flex flex-col justify-between">
               <CardHeader>
                 <CardTitle>Business+ Plan</CardTitle>
-                <p className="text-sm text-gray-500">$149/month</p>
+                <p className="text-sm text-gray-500">$38/month</p>
+                <p className="text-xs text-gray-400">or $342/year (save 25%)</p>
               </CardHeader>
               <CardContent className="flex-grow">
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   <li>Unlimited audits</li>
-                  <li>Dedicated account manager</li>
-                  <li>API access</li>
-                  <li>Team features</li>
+                  <li>All Pro features included</li>
+                  <li>Competitor benchmarking (placeholder)</li>
+                  <li>Priority support & consultations (placeholder)</li>
                 </ul>
               </CardContent>
               <div className="p-4 pt-0">

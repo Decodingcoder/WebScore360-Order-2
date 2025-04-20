@@ -334,67 +334,71 @@ export default function Dashboard() {
       {/* Recent Audits */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Recent Audits</h2>
-        {recentAudits.length > 0 ? (
-          <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Website</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-center">Score</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentAudits.map((audit) => (
-                  <TableRow key={audit.id}>
-                    <TableCell className="font-medium max-w-xs truncate">
-                      {audit.website_url}
-                    </TableCell>
-                    <TableCell>{formatDate(audit.created_at)}</TableCell>
-                    <TableCell className="text-center">
-                      {renderScore(audit.overall_score)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {audit.report_pdf_url && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          asChild
-                          title="Download Report"
-                        >
-                          <a
-                            href={audit.report_pdf_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download
-                          >
-                            <FileDown className="h-4 w-4 ml-1" />
-                          </a>
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="text-sm text-gray-500 dark:text-gray-400 px-4 py-3 border-t border-gray-100 dark:border-gray-700">
-              Showing {recentAudits.length} of {totalAudits} audits.{' '}
-              {totalAudits > recentAudits.length && (
-                <Link
-                  href="/dashboard/audits"
-                  className="text-blue-600 hover:underline"
-                >
-                  View All
-                </Link>
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <p>You haven&apos;t analyzed any websites yet.</p>
-          </div>
-        )}
+        <Card>
+          <CardContent className="p-0">
+            {recentAudits.length > 0 ? (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Website</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-center">Score</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentAudits.map((audit) => (
+                      <TableRow key={audit.id}>
+                        <TableCell className="font-medium max-w-xs truncate">
+                          {audit.website_url}
+                        </TableCell>
+                        <TableCell>{formatDate(audit.created_at)}</TableCell>
+                        <TableCell className="text-center">
+                          {renderScore(audit.overall_score)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {audit.report_pdf_url && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              asChild
+                              title="Download Report"
+                            >
+                              <a
+                                href={audit.report_pdf_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download
+                              >
+                                <FileDown className="h-4 w-4 ml-1" />
+                              </a>
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <div className="text-sm text-gray-500 dark:text-gray-400 px-4 py-3">
+                  Showing {recentAudits.length} of {totalAudits} audits.{' '}
+                  {totalAudits > recentAudits.length && (
+                    <Link
+                      href="/dashboard/audits"
+                      className="text-blue-600 hover:underline"
+                    >
+                      View All
+                    </Link>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-center p-4 text-gray-500 dark:text-gray-400">
+                <p>You haven&apos;t analyzed any websites yet.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
