@@ -1,13 +1,24 @@
+'use client' // Auth UI requires client-side interaction
+
 import { Footer } from '@/components/Footer'
-import GoogleButtonSkeleton from '@/components/GoogleButtonSkeleton'
-import GoogleLoginButton from '@/components/GoogleLoginButton'
 import LoginErrorMessage from '@/components/LoginErrorMessage'
 import { Card, CardContent } from '@/components/ui/card'
+import { createClient } from '@/utils/supabase/client'
+import { Auth } from '@supabase/auth-ui-react'
+import { ThemeSupa } from '@supabase/auth-ui-shared'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Suspense } from 'react'
 
 export default function LoginPage() {
+  const supabase = createClient()
+
+  // Determine the redirect URL based on the environment
+  // In production, use the environment variable. Fallback for local dev.
+  const redirectBase =
+    process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const redirectTo = `${redirectBase}/auth/callback`
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="container mx-auto py-6 px-4 flex justify-between items-center">
@@ -34,9 +45,14 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <Suspense fallback={<GoogleButtonSkeleton />}>
-              <GoogleLoginButton />
-            </Suspense>
+            <Auth
+              supabaseClient={supabase}
+              appearance={{ theme: ThemeSupa }}
+              providers={['google']}
+              onlyThirdPartyProviders
+              redirectTo={redirectTo}
+              theme="dark"
+            />
 
             <Suspense fallback={null}>
               <LoginErrorMessage />
