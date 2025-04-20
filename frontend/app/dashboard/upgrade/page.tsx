@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
 import { Elements, useStripe } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
+import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -219,8 +220,7 @@ function UpgradePageContent() {
   if (isLoadingData) {
     return (
       <div className="flex justify-center items-center h-64">
-        {/* Simple Spinner */}
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+        <Loader2 className="animate-spin h-12 w-12 text-blue-600" />
       </div>
     )
   }
