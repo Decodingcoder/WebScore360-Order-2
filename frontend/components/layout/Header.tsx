@@ -67,12 +67,6 @@ export function Header() {
           >
             Pricing
           </Link>
-          <Link
-            href="/#faq"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hidden sm:inline-block"
-          >
-            FAQ
-          </Link>
 
           {/* Conditional Auth Button */}
           {!mounted || isLoading ? (

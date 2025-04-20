@@ -22,6 +22,7 @@
     "@supabase/supabase-js": "^2.49.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "google-one-tap": "^1.0.6",
     "lucide-react": "^0.488.0",
     "motion": "^12.7.3",
     "next": "14.2.28",
