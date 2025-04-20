@@ -102,13 +102,10 @@ export default function UpgradePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Manage Your Plan</h1>
-
+      {/* Current Plan Section */}
+      <h2 className="text-xl font-bold">Current Plan</h2>
       <Card>
-        <CardHeader>
-          <CardTitle>Current Plan</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2 pt-6">
           <p className="text-lg font-semibold">
             You are currently on the{' '}
             <span
@@ -133,63 +130,66 @@ export default function UpgradePage() {
       </Card>
 
       {subscription !== 'business_plus' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Upgrade Your Plan</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            {subscription === 'free' && (
+        <>
+          {/* Upgrade Plan Section */}
+          <h2 className="text-xl font-bold">Upgrade Your Plan</h2>
+          <Card>
+            <CardContent className="grid gap-6 md:grid-cols-2 pt-6">
+              {subscription === 'free' && (
+                <Card className="flex flex-col justify-between">
+                  <CardHeader>
+                    <CardTitle>Pro Plan</CardTitle>
+                    <p className="text-sm text-gray-500">$9/month</p>
+                    <p className="text-xs text-gray-400">
+                      or $81/year (save 25%)
+                    </p>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>30 audits per month</li>
+                      <li>Comprehensive fix-it guidance</li>
+                      <li>Priority email support</li>
+                    </ul>
+                  </CardContent>
+                  <div className="p-4 pt-0">
+                    <Button
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={() => openUpgradeModal('Pro')}
+                    >
+                      Upgrade to Pro
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
               <Card className="flex flex-col justify-between">
                 <CardHeader>
-                  <CardTitle>Pro Plan</CardTitle>
-                  <p className="text-sm text-gray-500">$9/month</p>
+                  <CardTitle>Business+ Plan</CardTitle>
+                  <p className="text-sm text-gray-500">$38/month</p>
                   <p className="text-xs text-gray-400">
-                    or $81/year (save 25%)
+                    or $342/year (save 25%)
                   </p>
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <ul className="list-disc list-inside space-y-1 text-sm">
-                    <li>30 audits per month</li>
-                    <li>Comprehensive fix-it guidance</li>
-                    <li>Priority email support</li>
+                    <li>Unlimited audits</li>
+                    <li>All Pro features included</li>
+                    <li>Competitor benchmarking (placeholder)</li>
+                    <li>Priority support & consultations (placeholder)</li>
                   </ul>
                 </CardContent>
                 <div className="p-4 pt-0">
                   <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    onClick={() => openUpgradeModal('Pro')}
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    onClick={() => openUpgradeModal('Business+')}
                   >
-                    Upgrade to Pro
+                    Upgrade to Business+
                   </Button>
                 </div>
               </Card>
-            )}
-
-            <Card className="flex flex-col justify-between">
-              <CardHeader>
-                <CardTitle>Business+ Plan</CardTitle>
-                <p className="text-sm text-gray-500">$38/month</p>
-                <p className="text-xs text-gray-400">or $342/year (save 25%)</p>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Unlimited audits</li>
-                  <li>All Pro features included</li>
-                  <li>Competitor benchmarking (placeholder)</li>
-                  <li>Priority support & consultations (placeholder)</li>
-                </ul>
-              </CardContent>
-              <div className="p-4 pt-0">
-                <Button
-                  className="w-full bg-purple-600 hover:bg-purple-700"
-                  onClick={() => openUpgradeModal('Business+')}
-                >
-                  Upgrade to Business+
-                </Button>
-              </div>
-            </Card>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </>
       )}
 
       <UpgradeModal

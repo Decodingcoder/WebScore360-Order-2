@@ -148,11 +148,9 @@ export default function Dashboard() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return new Intl.DateTimeFormat('en-US', {
-      // year: 'numeric', // Omit year for brevity
+      year: 'numeric',
       month: 'numeric',
       day: 'numeric',
-      // hour: '2-digit',
-      // minute: '2-digit',
     }).format(date)
   }
 
@@ -335,7 +333,7 @@ export default function Dashboard() {
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Recent Audits</h2>
         <Card>
-          <CardContent className="p-0">
+          <CardContent className="p-4">
             {recentAudits.length > 0 ? (
               <>
                 <Table>
