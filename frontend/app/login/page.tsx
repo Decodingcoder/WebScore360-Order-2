@@ -17,8 +17,8 @@ export default function LoginPage() {
   // In production, use the environment variable. Fallback for local dev.
   const redirectBase =
     process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-  // Point redirectTo back to the login page itself for Auth UI
-  const redirectTo = `${redirectBase}/login`
+  // Point redirectTo to the new server-side callback handler
+  const redirectTo = `${redirectBase}/auth/callback`
 
   return (
     <div className="flex flex-col min-h-screen">

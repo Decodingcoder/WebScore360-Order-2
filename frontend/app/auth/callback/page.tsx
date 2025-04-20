@@ -1,13 +1,30 @@
-import AuthCallbackHandler from '@/components/AuthCallbackHandler'
-import { Suspense } from 'react'
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse } from 'next/server'
 
-// This page route simply renders the client component responsible
-// for handling the OAuth callback hash fragment.
-// We wrap it in Suspense because AuthCallbackHandler uses useSearchParams.
-export default function AuthCallbackPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div> /* Basic fallback UI */}>
-      <AuthCallbackHandler />
-    </Suspense>
-  )
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url)
+  const code = searchParams.get('code')
+  const next = searchParams.get('next') ?? '/dashboard'
+
+  if (code) {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get() {
+            return '' // Not needed for callback
+          },
+          set() {},
+          remove() {},
+        },
+      }
+    )
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`)
+    }
+  }
+  // On error, redirect to login with error message
+  return NextResponse.redirect(`${origin}/login?error=auth-callback`)
 }
