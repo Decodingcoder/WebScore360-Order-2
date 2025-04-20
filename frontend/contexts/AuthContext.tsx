@@ -28,6 +28,7 @@ type AuthContextType = {
   ) => Promise<{
     error: Error | null
   }>
+  refreshSession: () => Promise<void>
 }
 
 // Create default values that are safe for SSG
@@ -38,6 +39,7 @@ const defaultAuthContext: AuthContextType = {
   signOut: async () => {}, // No-op function for SSG
   signInWithEmail: async () => ({ error: null }),
   signUpWithEmail: async () => ({ error: null }),
+  refreshSession: async () => {},
 }
 
 const AuthContext = createContext<AuthContextType>(defaultAuthContext)
@@ -46,7 +48,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [hasInitializedAuth, setHasInitializedAuth] = useState(false)
   const supabase = useSupabase()
+
+  // Function to refresh session - can be called manually when needed
+  const refreshSession = useCallback(async () => {
+    try {
+      console.log('Manually refreshing session')
+      const { data, error } = await supabase.auth.refreshSession()
+      if (error) {
+        console.error('Error refreshing session:', error)
+        return
+      }
+      if (data.session) {
+        console.log('Session refreshed successfully')
+        setSession(data.session)
+        setUser(data.session.user)
+      }
+    } catch (error) {
+      console.error('Error in refreshSession:', error)
+    }
+  }, [supabase])
 
   // This effect fetches the initial session once on mount
   useEffect(() => {
@@ -63,6 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log('Visibility changed, updating session')
             setSession(currentSession)
             setUser(currentSession.user)
+          } else if (mounted) {
+            // No current session, try to refresh it
+            refreshSession()
           }
         } catch (error) {
           console.error('Error refreshing session on visibility change:', error)
@@ -72,9 +97,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
+    const handleStorage = async (event: StorageEvent) => {
+      // Listen for changes to auth-related localStorage items
+      if (event.key?.includes('auth')) {
+        console.log('Auth storage changed, refreshing session')
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        if (mounted && session) {
+          setSession(session)
+          setUser(session.user)
+        }
+      }
+    }
+
+    window.addEventListener('storage', handleStorage)
+
     const initializeAuth = async () => {
       try {
         console.log('Initializing auth')
+        setIsLoading(true)
+
+        // Try to get current session
         const {
           data: { session },
         } = await supabase.auth.getSession()
@@ -86,12 +130,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(session.user)
           } else {
             console.log('No initial session found')
+            // Try to recover session
+            await refreshSession()
           }
+          setHasInitializedAuth(true)
           setIsLoading(false)
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
         if (mounted) {
+          setHasInitializedAuth(true)
           setIsLoading(false)
         }
       }
@@ -102,8 +150,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('storage', handleStorage)
     }
-  }, [supabase])
+  }, [supabase, refreshSession])
 
   // This effect sets up the auth state change listener
   useEffect(() => {
@@ -198,10 +247,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = {
     user,
     session,
-    isLoading,
+    isLoading: isLoading || !hasInitializedAuth,
     signOut,
     signInWithEmail,
     signUpWithEmail,
+    refreshSession,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -17,24 +17,46 @@ export default function DashboardLayout({
   const { isLoading, session, user } = useAuth()
   const router = useRouter()
   const [authChecked, setAuthChecked] = useState(false)
+  const [hasLocalAuth, setHasLocalAuth] = useState(false)
+
+  // Check for auth tokens in localStorage - this is a safety check
+  useEffect(() => {
+    // Only run in browser
+    if (typeof window !== 'undefined') {
+      // Check if auth data exists in localStorage - any of these keys would indicate a logged-in state
+      const hasToken =
+        localStorage.getItem('sb-auth-token') ||
+        localStorage.getItem('supabase.auth.token') ||
+        localStorage.getItem('sb-refresh-token')
+      setHasLocalAuth(!!hasToken)
+      console.log('Auth token found in localStorage:', !!hasToken)
+    }
+  }, [])
 
   // Wait for authentication state to stabilize before redirecting
   useEffect(() => {
     // Only consider auth check complete after loading has finished
     if (!isLoading) {
-      // Add a small delay to ensure auth state is stable
+      // Use a longer delay to ensure auth state is stable
       const timer = setTimeout(() => {
         setAuthChecked(true)
 
-        // Redirect if no session after auth check completes
-        if (!session && !user) {
+        // If we have session or user, we're authenticated
+        const isAuthenticated = !!session || !!user
+
+        // Only redirect if:
+        // 1. No session AND no user from AuthContext
+        // 2. No auth tokens in localStorage (failsafe)
+        // 3. Loading has completed
+        if (!isAuthenticated && !hasLocalAuth) {
+          console.log('No auth detected, redirecting to login')
           router.push('/login')
         }
-      }, 500) // Short delay to ensure auth state is stable
+      }, 1500) // Longer delay to ensure auth state is stable
 
       return () => clearTimeout(timer)
     }
-  }, [isLoading, session, user, router])
+  }, [isLoading, session, user, router, hasLocalAuth])
 
   // Show loading state while authentication is being checked
   if (isLoading || !authChecked) {
@@ -67,8 +89,9 @@ export default function DashboardLayout({
     )
   }
 
-  // Return null if not authenticated to prevent flash of dashboard before redirect
-  if (!session && !user) {
+  // Even if auth context isn't ready but we found local auth, show the dashboard
+  // This prevents flashing/redirects when refreshing
+  if (!session && !user && !hasLocalAuth) {
     return null
   }
 

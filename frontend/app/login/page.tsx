@@ -4,28 +4,45 @@ import AuthForm from '@/components/AuthForm'
 import { Footer } from '@/components/Footer'
 import LoginErrorMessage from '@/components/LoginErrorMessage'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/contexts/AuthContext'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Suspense } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 
 export default function LoginPage() {
+  const { session } = useAuth()
+  const [mounted, setMounted] = useState(false)
+
+  // Handle client-side only rendering for auth check
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="fixed top-0 left-0 right-0 backdrop-blur-sm bg-white/70 dark:bg-gray-900/70 z-50 py-4 px-4 border-b border-gray-200 dark:border-gray-800">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
-              alt="WebScore360 Logo"
-              width={80}
-              height={32}
-              className="h-8 w-auto"
-            />
+            <Link href="/">
+              <Image
+                src="/logo.png"
+                alt="WebScore360 Logo"
+                width={80}
+                height={32}
+                className="h-8 w-auto"
+              />
+            </Link>
           </div>
           <nav className="flex gap-3">
-            <Button size="sm" asChild>
-              <Link href="#pricing">Pricing</Link>
-            </Button>
+            {mounted && session ? (
+              <Button size="sm" asChild>
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+            ) : (
+              <Button size="sm" asChild>
+                <Link href="#pricing">Pricing</Link>
+              </Button>
+            )}
           </nav>
         </div>
       </header>
