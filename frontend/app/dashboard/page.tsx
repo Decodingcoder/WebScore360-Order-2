@@ -192,26 +192,40 @@ export default function Dashboard() {
 
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center gap-4 mb-4">
-                <div
-                  className={`h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold ${getScoreColor(
-                    latestAudit.overall_score
-                  )}`}
-                >
-                  {Math.round(latestAudit.overall_score)}
+              <div className="flex justify-between items-start gap-4 mb-6">
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold ${getScoreColor(
+                      latestAudit.overall_score
+                    )} shrink-0`}
+                  >
+                    {Math.round(latestAudit.overall_score)}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      {latestAudit.website_url}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Analyzed on{' '}
+                      {new Date(latestAudit.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold">
-                    {latestAudit.website_url}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Analyzed on{' '}
-                    {new Date(latestAudit.created_at).toLocaleDateString()}
-                  </p>
-                </div>
+                {latestAudit.report_pdf_url && (
+                  <Button variant="outline" size="sm" asChild className="mt-1">
+                    <a
+                      href={latestAudit.report_pdf_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download
+                    >
+                      Download Report
+                    </a>
+                  </Button>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
                 <ScoreCard
                   title="Performance"
                   score={latestAudit.performance_score}
