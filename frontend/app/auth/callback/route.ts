@@ -4,6 +4,9 @@ import { type NextRequest, NextResponse } from 'next/server'
 // This route handler is specifically for the server-side authentication flow.
 // It exchanges an authorization code for a session.
 export async function GET(request: NextRequest) {
+  // Log all incoming cookies for debugging PKCE issues
+  console.log('Auth callback - Incoming cookies:', request.cookies.getAll())
+
   // Use request.nextUrl for reliable access to search params behind proxies
   const { searchParams } = request.nextUrl
   const code = searchParams.get('code')
