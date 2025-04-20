@@ -86,7 +86,7 @@ export default function AnalyzeForm({
           .update({
             audits_remaining: auditsRemaining - 1,
           })
-          .eq('user_id', user.id)
+          .eq('id', user.id)
 
         if (updateError)
           throw new Error(

@@ -64,7 +64,7 @@ export default function Dashboard() {
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
-          .eq('user_id', fetchedUser.id)
+          .eq('id', fetchedUser.id)
           .single()
 
         if (profile) {
