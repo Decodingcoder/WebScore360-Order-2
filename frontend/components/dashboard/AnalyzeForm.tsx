@@ -46,22 +46,28 @@ export default function AnalyzeForm({
         throw new Error('You must be logged in to analyze a website')
       }
 
-      // Validate URL format
-      if (
-        !websiteUrl.match(
-          /^(http|https):\/\/[a-zA-Z0-9][-a-zA-Z0-9.]*\.[a-zA-Z]{2,}(?:\/.*)?$/
-        )
-      ) {
-        throw new Error(
-          'Please enter a valid website URL (including http:// or https://)'
-        )
+      // --- URL Handling: Add schema if missing ---
+      let finalWebsiteUrl = websiteUrl.trim()
+      if (!finalWebsiteUrl) {
+        throw new Error('Please enter a website URL.')
       }
+      if (!/^https?:\/\//i.test(finalWebsiteUrl)) {
+        finalWebsiteUrl = 'https://' + finalWebsiteUrl
+      }
+
+      // Basic validation after adding schema (optional, but good practice)
+      try {
+        new URL(finalWebsiteUrl) // Check if it forms a valid URL object
+      } catch {
+        throw new Error('Please enter a valid website URL.')
+      }
+      // --- End URL Handling ---
 
       // Create a new audit record with proper user authentication
       const { error: insertError } = await supabase.from('audits').insert({
         user_id: user.id,
         requested_email: user.email,
-        website_url: websiteUrl,
+        website_url: finalWebsiteUrl, // Use the potentially modified URL
         overall_score: null,
         performance_score: null,
         seo_score: null,
