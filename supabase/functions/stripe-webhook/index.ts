@@ -202,54 +202,74 @@ serve(async (req: Request) => {
       )
 
       // Find the user by Stripe Customer ID
-      const { data: profile, error: findError } = await supabaseAdmin
+      const { data: profiles, error: findError } = await supabaseAdmin
         .from('profiles')
         .select('id') // Select the user id
         .eq('stripe_customer_id', stripeCustomerId)
-        .single() // Expecting only one user per customer ID
+      // Removed .single() to handle multiple/no rows explicitly
 
       if (findError) {
-        // If user not found, it might be an old customer or data mismatch, log but acknowledge
+        // If there's a general DB error during lookup, return 500
         console.error(
-          `Webhook Info: Profile not found for stripe_customer_id ${stripeCustomerId}. Error: ${findError.message}`
+          `Webhook Error: Database lookup failed for stripe_customer_id ${stripeCustomerId}. Error: ${findError.message}`
         )
+        return new Response(`Webhook Error: Database lookup failed.`, {
+          status: 500,
+        })
+      }
+
+      if (!profiles || profiles.length === 0) {
+        // Profile not found - this is the case from your log
+        console.warn(
+          `Webhook Info: Profile not found for stripe_customer_id ${stripeCustomerId}. Cannot downgrade.`
+        )
+        // Acknowledge the webhook successfully, nothing to update
         return new Response(
           JSON.stringify({ received: true, status: 'Profile not found' }),
           {
-            status: 200, // Acknowledge webhook even if profile not found
+            status: 200,
             headers: { 'Content-Type': 'application/json' },
           }
         )
       }
 
-      if (profile) {
-        const userId = profile.id
-        console.log(`Found user ${userId} for cancellation.`)
-
-        // Update the user's profile to downgrade to free tier
-        const { error: updateError } = await supabaseAdmin
-          .from('profiles')
-          .update({
-            subscription_tier: 'free',
-            audits_remaining: 1, // Reset audits to free plan limit
-            // Optionally clear stripe_customer_id or set an end date
-            // stripe_customer_id: null,
-          })
-          .eq('id', userId)
-
-        if (updateError) {
-          throw updateError // Let the outer catch handle DB errors for retry
-        }
-
-        console.log(
-          `Successfully downgraded profile for user ${userId} to free tier.`
+      if (profiles.length > 1) {
+        // Multiple profiles found - data integrity issue!
+        console.error(
+          `Webhook Error: Multiple profiles found for stripe_customer_id ${stripeCustomerId}! Cannot reliably downgrade.`
         )
-      } else {
-        // This case should ideally be covered by findError check with .single()
-        console.warn(
-          `Webhook Warning: Profile lookup returned null unexpectedly for stripe_customer_id ${stripeCustomerId}`
+        // Acknowledge the webhook, but log severe error
+        return new Response(
+          JSON.stringify({ received: true, status: 'Multiple profiles found' }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
         )
       }
+
+      // Exactly one profile found
+      const userId = profiles[0].id
+      console.log(`Found user ${userId} for cancellation.`)
+
+      // Update the user's profile to downgrade to free tier
+      const { error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          subscription_tier: 'free',
+          audits_remaining: 1, // Reset audits to free plan limit
+          // Optionally clear stripe_customer_id or set an end date
+          // stripe_customer_id: null,
+        })
+        .eq('id', userId)
+
+      if (updateError) {
+        throw updateError // Let the outer catch handle DB errors for retry
+      }
+
+      console.log(
+        `Successfully downgraded profile for user ${userId} to free tier.`
+      )
     } catch (dbError) {
       console.error(
         `Database error during cancellation for Stripe Customer ${stripeCustomerId}: ${dbError.message}`
