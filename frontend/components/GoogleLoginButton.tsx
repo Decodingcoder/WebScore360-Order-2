@@ -17,8 +17,7 @@ export default function GoogleLoginButton() {
 
       const supabase = createClient()
 
-      // Use signInWithOAuth with different settings to ensure
-      // we get a proper session establishment
+      // Use signInWithOAuth to authenticate with Google
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -27,9 +26,8 @@ export default function GoogleLoginButton() {
             access_type: 'offline',
             prompt: 'consent',
           },
-          // Use implicit flow to ensure tokens come back in URL hash
-          // This helps when the cookie storage is problematic
-          flowType: 'implicit',
+          // The flowType property is not supported in this version
+          // We'll rely on the default flow
         },
       })
 
