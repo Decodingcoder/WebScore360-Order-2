@@ -173,7 +173,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            // Redirect directly to dashboard after email confirmation for Implicit flow
+            emailRedirectTo: `${window.location.origin}/dashboard`,
           },
         })
         return { error }
