@@ -114,6 +114,25 @@ export default function AuthForm() {
               : 'Create Account'}
           </Button>
 
+          <div
+            id="g_id_onload"
+            data-client_id="845104135306-8k7qjt5d95nqtbu034ql1f2g0ih167n0.apps.googleusercontent.com"
+            data-context="signin"
+            data-ux_mode="popup"
+            data-callback="handleSignInWithGoogle"
+            data-auto_prompt="false"
+          ></div>
+
+          <div
+            className="g_id_signin"
+            data-type="standard"
+            data-shape="rectangular"
+            data-theme="outline"
+            data-text="signin_with"
+            data-size="large"
+            data-logo_alignment="left"
+          ></div>
+
           <div className="text-center">
             <button
               type="button"

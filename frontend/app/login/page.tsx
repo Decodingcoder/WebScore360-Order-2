@@ -4,11 +4,24 @@ import AuthForm from '@/components/AuthForm'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/layout/Header'
 import LoginErrorMessage from '@/components/LoginErrorMessage'
+import { createClient } from '@/utils/supabase/client'
 import { Suspense } from 'react'
 
 export default function LoginPage() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  async function handleSignInWithGoogle(response: any) {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: response.credential,
+    })
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
+      <script src="https://accounts.google.com/gsi/client" async></script>
+
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center pt-28">
