@@ -1,8 +1,11 @@
 // supabase/functions/stripe-webhook/index.ts
 
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
-// Import Supabase client library
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+// Import Supabase client library and type
+import {
+  createClient,
+  SupabaseClient,
+} from 'https://esm.sh/@supabase/supabase-js@2'
 // Import Stripe library
 import Stripe from 'https://esm.sh/stripe@14.10.0?target=deno' // Updated Stripe version, removed explicit deno-std
 
@@ -63,11 +66,34 @@ serve(async (req: Request) => {
     return new Response(`Webhook Error: ${err.message}`, { status: 400 })
   }
 
+  // Initialize Supabase Admin Client (do this once after event validation)
+  let supabaseAdmin: SupabaseClient // Explicitly type using SupabaseClient type
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error(
+        'Missing Supabase URL or Service Role Key in environment variables.'
+      )
+      throw new Error('Supabase configuration missing.')
+    }
+
+    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      // Optional: Explicitly define auth schema if needed, usually defaults are fine
+      // auth: { persistSession: false } // No session persistence needed for admin client
+    })
+  } catch (initError) {
+    console.error('Failed to initialize Supabase admin client:', initError)
+    return new Response('Webhook Error: Internal configuration error.', {
+      status: 500,
+    })
+  }
+
   // Handle the checkout.session.completed event
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object // Type assertion if needed, or use as any
+    const session = event.data.object as Stripe.Checkout.Session // Added type assertion
 
-    // Check if metadata and user_id exist
     if (!session.metadata || !session.metadata.user_id) {
       console.error(
         'Error: Missing user_id in checkout session metadata.',
@@ -77,114 +103,195 @@ serve(async (req: Request) => {
         status: 400,
       })
     }
+    if (!session.customer) {
+      console.error(
+        `Error: Missing stripe customer id for session ${session.id}`
+      )
+      return new Response(
+        JSON.stringify({ received: true, error: 'Missing stripe customer id' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+    if (!session.subscription) {
+      console.error(`Error: Missing subscription id for session ${session.id}`)
+      return new Response(
+        JSON.stringify({ received: true, error: 'Missing subscription id' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
 
     const userId = session.metadata.user_id
-    const stripeCustomerId = session.customer
-    const subscription = await stripe.subscriptions.retrieve(
-      session.subscription as string
-    )
+    const stripeCustomerId = session.customer as string
+    const stripeSubscriptionId = session.subscription as string // Get subscription ID
+
+    // Retrieve the subscription to get the price ID
+    // It's good practice to retrieve it even if session has some details,
+    // ensures we have the latest state.
+    let subscription: Stripe.Subscription
+    try {
+      subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId)
+    } catch (retrieveError) {
+      console.error(
+        `Error retrieving subscription ${stripeSubscriptionId} from Stripe:`,
+        retrieveError
+      )
+      return new Response('Webhook Error: Could not retrieve subscription.', {
+        status: 500,
+      })
+    }
+
     const priceId = subscription.items.data[0]?.price.id
 
     if (!priceId) {
       console.error(
         'Error: Could not find Price ID in subscription.',
-        session.id
+        subscription.id
       )
-      return new Response('Webhook Error: Missing Price ID.', { status: 400 })
+      return new Response('Webhook Error: Missing Price ID in subscription.', {
+        status: 400,
+      })
     }
 
-    // Assert priceId is a key of PRICE_ID_MAP before lookup
     const newTier = PRICE_ID_MAP[priceId as keyof typeof PRICE_ID_MAP]
 
     if (!newTier) {
       console.error(
-        `Error: Unrecognized Price ID ${priceId} for session ${session.id}`
+        `Error: Unrecognized Price ID ${priceId} for subscription ${subscription.id}`
       )
-      // Still acknowledge the webhook, but log the error
       return new Response(
         JSON.stringify({ received: true, error: 'Unrecognized Price ID' }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      )
-    }
-
-    if (!stripeCustomerId) {
-      console.error(
-        `Error: Missing stripe customer id for session ${session.id}`
-      )
-      // Still acknowledge the webhook, but log the error
-      return new Response(
-        JSON.stringify({ received: true, error: 'Missing stripe customer id' }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       )
     }
 
     console.log(
-      `Processing checkout for user ${userId}, tier ${newTier}, stripe customer ${stripeCustomerId}`
+      `Processing checkout for user ${userId}, tier ${newTier}, stripe customer ${stripeCustomerId}, subscription ${stripeSubscriptionId}`
     )
 
     try {
-      // Initialize Supabase client with elevated privileges
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      )
-
-      // Determine the correct audit count for the new tier
       let newAuditCount: number | null
-      if (newTier === 'pro') {
-        newAuditCount = 30 // Pro plan gets 30 audits
-      } else if (newTier === 'business_plus') {
-        newAuditCount = null // Represent unlimited with null (or a very high number)
-      } else {
-        newAuditCount = 1 // Default to free plan limit if needed
-      }
+      if (newTier === 'pro') newAuditCount = 30
+      else if (newTier === 'business_plus') newAuditCount = null
+      else newAuditCount = 1 // Should ideally not happen for paid plans
 
-      // Update the user's profile
+      // Update the user's profile, including the stripe_subscription_id
       const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({
           subscription_tier: newTier,
           stripe_customer_id: stripeCustomerId,
-          audits_remaining: newAuditCount, // Set the audit count
+          stripe_subscription_id: stripeSubscriptionId, // STORE THE SUBSCRIPTION ID
+          audits_remaining: newAuditCount,
         })
         .eq('id', userId)
 
-      if (updateError) {
-        throw updateError
-      }
+      if (updateError) throw updateError
 
       console.log(
-        `Successfully updated profile for user ${userId} to ${newTier} with ${
-          newAuditCount === null ? 'unlimited' : newAuditCount
-        } audits.`
+        `Successfully updated profile for user ${userId} to ${newTier} (sub: ${stripeSubscriptionId}).`
       )
     } catch (dbError) {
       console.error(
-        `Database error updating profile for user ${userId}: ${dbError.message}`
+        `DB error during checkout complete for user ${userId}: ${dbError.message}`
       )
-      // Return 500 so Stripe retries the webhook
       return new Response(`Webhook Error: Database update failed.`, {
         status: 500,
       })
     }
   }
+
+  // Handle subscription updates
+  else if (event.type === 'customer.subscription.updated') {
+    const subscription = event.data.object as Stripe.Subscription
+    const stripeCustomerId = subscription.customer as string
+    const stripeSubscriptionId = subscription.id
+    const priceId = subscription.items.data[0]?.price.id
+
+    // Check for necessary data
+    if (!stripeCustomerId) {
+      console.error(
+        'Webhook Error: Missing customer ID in customer.subscription.updated event.',
+        subscription.id
+      )
+      return new Response('Webhook Error: Missing customer ID.', {
+        status: 400,
+      })
+    }
+    if (!priceId) {
+      console.error(
+        'Webhook Error: Missing price ID in customer.subscription.updated event.',
+        subscription.id
+      )
+      // Might be an update unrelated to price (e.g., metadata), acknowledge successfully.
+      return new Response(
+        JSON.stringify({
+          received: true,
+          status: 'Update ignored, no price ID change.',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const newTier = PRICE_ID_MAP[priceId as keyof typeof PRICE_ID_MAP]
+
+    if (!newTier) {
+      console.error(
+        `Error: Unrecognized Price ID ${priceId} in subscription update ${subscription.id}`
+      )
+      return new Response(
+        JSON.stringify({ received: true, error: 'Unrecognized Price ID' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log(
+      `Processing subscription update for customer ${stripeCustomerId}, sub ${stripeSubscriptionId} to tier ${newTier}`
+    )
+
+    try {
+      let newAuditCount: number | null
+      if (newTier === 'pro') newAuditCount = 30
+      else if (newTier === 'business_plus') newAuditCount = null
+      else newAuditCount = 1 // Fallback, might indicate free tier change?
+
+      // Update profile based on stripe_customer_id
+      // Ensure stripe_subscription_id matches the updated subscription
+      const { error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          subscription_tier: newTier,
+          audits_remaining: newAuditCount,
+          stripe_subscription_id: stripeSubscriptionId, // Ensure this is up-to-date
+        })
+        .eq('stripe_customer_id', stripeCustomerId)
+
+      if (updateError) throw updateError
+
+      console.log(
+        `Successfully updated profile for customer ${stripeCustomerId} to ${newTier} via subscription update.`
+      )
+    } catch (dbError) {
+      console.error(
+        `DB error during subscription update for customer ${stripeCustomerId}: ${dbError.message}`
+      )
+      return new Response(`Webhook Error: Database update failed.`, {
+        status: 500,
+      })
+    }
+  }
+
   // Handle subscription cancellation
   else if (event.type === 'customer.subscription.deleted') {
-    const subscription = event.data.object as Stripe.Subscription // Cast to Stripe Subscription type
+    const subscription = event.data.object as Stripe.Subscription
     const stripeCustomerId = subscription.customer as string
+    // It's possible the subscription ID being deleted is the one we have stored
+    // const deletedStripeSubscriptionId = subscription.id;
 
     if (!stripeCustomerId) {
       console.error(
         'Webhook Error: Missing customer ID in customer.subscription.deleted event.',
         subscription.id
       )
-      // Don't return 500, as the event data is incomplete
       return new Response('Webhook Error: Missing customer ID.', {
         status: 400,
       })
@@ -195,91 +302,64 @@ serve(async (req: Request) => {
     )
 
     try {
-      // Initialize Supabase client with elevated privileges
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      )
-
-      // Find the user by Stripe Customer ID
-      const { data: profiles, error: findError } = await supabaseAdmin
+      // Find the user by Stripe Customer ID - Use single() as customer ID should be unique
+      const { data: profile, error: findError } = await supabaseAdmin
         .from('profiles')
         .select('id') // Select the user id
         .eq('stripe_customer_id', stripeCustomerId)
-      // Removed .single() to handle multiple/no rows explicitly
+        .single() // Expect only one profile per customer ID
 
       if (findError) {
-        // If there's a general DB error during lookup, return 500
-        console.error(
-          `Webhook Error: Database lookup failed for stripe_customer_id ${stripeCustomerId}. Error: ${findError.message}`
-        )
-        return new Response(`Webhook Error: Database lookup failed.`, {
-          status: 500,
-        })
-      }
-
-      if (!profiles || profiles.length === 0) {
-        // Profile not found - this is the case from your log
-        console.warn(
-          `Webhook Info: Profile not found for stripe_customer_id ${stripeCustomerId}. Cannot downgrade.`
-        )
-        // Acknowledge the webhook successfully, nothing to update
-        return new Response(
-          JSON.stringify({ received: true, status: 'Profile not found' }),
-          {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }
-        )
-      }
-
-      if (profiles.length > 1) {
-        // Multiple profiles found - data integrity issue!
-        console.error(
-          `Webhook Error: Multiple profiles found for stripe_customer_id ${stripeCustomerId}! Cannot reliably downgrade.`
-        )
-        // Acknowledge the webhook, but log severe error
-        return new Response(
-          JSON.stringify({ received: true, status: 'Multiple profiles found' }),
-          {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }
-        )
+        // Handle case where profile is not found specifically
+        if (findError.code === 'PGRST116') {
+          // PostgREST code for no rows found
+          console.warn(
+            `Webhook Info: Profile not found for stripe_customer_id ${stripeCustomerId} during cancellation. Cannot downgrade.`
+          )
+          return new Response(
+            JSON.stringify({ received: true, status: 'Profile not found' }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          )
+        } else {
+          // Other DB error during lookup
+          console.error(
+            `Webhook Error: Database lookup failed for stripe_customer_id ${stripeCustomerId}. Error: ${findError.message}`
+          )
+          return new Response(`Webhook Error: Database lookup failed.`, {
+            status: 500,
+          })
+        }
       }
 
       // Exactly one profile found
-      const userId = profiles[0].id
-      console.log(`Found user ${userId} for cancellation.`)
+      const userId = profile.id
+      console.log(`Found user ${userId} for cancellation.`) // Corrected log message
 
       // Update the user's profile to downgrade to free tier
+      // Set stripe_subscription_id to null
       const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({
           subscription_tier: 'free',
           audits_remaining: 1, // Reset audits to free plan limit
-          // Optionally clear stripe_customer_id or set an end date
+          stripe_subscription_id: null, // Clear the subscription ID
+          // Optionally clear stripe_customer_id if you don't want to retain it after cancellation
           // stripe_customer_id: null,
         })
         .eq('id', userId)
 
-      if (updateError) {
-        throw updateError // Let the outer catch handle DB errors for retry
-      }
+      if (updateError) throw updateError
 
       console.log(
         `Successfully downgraded profile for user ${userId} to free tier.`
       )
     } catch (dbError) {
       console.error(
-        `Database error during cancellation for Stripe Customer ${stripeCustomerId}: ${dbError.message}`
+        `DB error during cancellation for Stripe Customer ${stripeCustomerId}: ${dbError.message}`
       )
-      // Return 500 so Stripe retries the webhook
       return new Response(
         `Webhook Error: Database update failed during cancellation.`,
-        {
-          status: 500,
-        }
+        { status: 500 }
       )
     }
   }
@@ -295,5 +375,6 @@ serve(async (req: Request) => {
 
 /* 
 TODO List for this function:
-- Consider adding handling for subscription updates later.
+- Add handling for payment_failed events?
+- Consider edge cases for multiple subscriptions per customer if that becomes possible.
 */

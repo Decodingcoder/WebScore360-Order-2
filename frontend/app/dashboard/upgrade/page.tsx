@@ -2,12 +2,12 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useToast } from '@/hooks/use-toast' // Changed import path for shadcn toast hook
+import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
 import { Elements, useStripe } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 // Function to format plan name
 const formatPlanName = (plan: string) => {
@@ -38,124 +38,148 @@ function UpgradePageContent() {
   const [subscription, setSubscription] = useState<
     'free' | 'pro' | 'business_plus' | null
   >(null)
+  const [stripeSubscriptionId, setStripeSubscriptionId] = useState<
+    string | null
+  >(null) // State for subscription ID
   const [auditsRemaining, setAuditsRemaining] = useState<number | null>(null)
   const [isLoadingData, setIsLoadingData] = useState(true)
-  const [isRedirecting, setIsRedirecting] = useState<string | null>(null) // Store the priceId being processed
+  const [isProcessing, setIsProcessing] = useState<string | null>(null) // Renamed from isRedirecting, handles both checkout and update
   const supabase = createClient()
   const router = useRouter()
-  const stripe = useStripe() // Stripe hook
+  const stripe = useStripe() // Stripe hook for redirect
   const { toast } = useToast() // Get toast function from the hook
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      setIsLoadingData(true)
-      try {
-        const { data: userData, error: userError } =
-          await supabase.auth.getUser()
-        if (userError || !userData?.user) {
-          console.error('Error fetching user or user not logged in:', userError)
-          toast({
-            variant: 'destructive',
-            title: 'Authentication Error',
-            description: 'Please log in to manage your subscription.',
-          })
-          router.push('/login')
-          return
-        }
-
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('subscription_tier, audits_remaining')
-          .eq('id', userData.user.id)
-          .single()
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError)
-          toast({
-            variant: 'destructive',
-            title: 'Error Loading Profile',
-            description: 'Could not load your profile data.',
-          })
-        } else if (profile) {
-          setSubscription(profile.subscription_tier)
-          setAuditsRemaining(profile.audits_remaining)
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error)
+  // Wrap fetchUserData in useCallback to prevent re-creation on every render
+  const fetchUserData = useCallback(async () => {
+    setIsLoadingData(true)
+    try {
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      if (userError || !userData?.user) {
+        console.error('Error fetching user or user not logged in:', userError)
         toast({
           variant: 'destructive',
-          title: 'Unexpected Error',
-          description: 'An error occurred while loading your data.',
+          title: 'Authentication Error',
+          description: 'Please log in to manage your subscription.',
         })
-      } finally {
-        setIsLoadingData(false)
+        router.push('/login')
+        return
       }
-    }
-    fetchUserData()
-  }, [supabase, router, toast]) // Added toast to dependency array
 
-  // Handle redirect to Stripe Checkout
-  const handleCheckout = async (priceId: string) => {
-    if (!stripe) {
-      console.error('Stripe.js has not loaded yet.')
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        // Fetch stripe_subscription_id as well
+        .select('subscription_tier, audits_remaining, stripe_subscription_id')
+        .eq('id', userData.user.id)
+        .single()
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError)
+        toast({
+          variant: 'destructive',
+          title: 'Error Loading Profile',
+          description: 'Could not load your profile data.',
+        })
+      } else if (profile) {
+        setSubscription(profile.subscription_tier)
+        setAuditsRemaining(profile.audits_remaining)
+        setStripeSubscriptionId(profile.stripe_subscription_id) // Store subscription ID
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error)
       toast({
         variant: 'destructive',
-        title: 'Payment System Error',
-        description: 'Payment system is not ready. Please try again shortly.',
+        title: 'Unexpected Error',
+        description: 'An error occurred while loading your data.',
       })
-      return
+    } finally {
+      setIsLoadingData(false)
     }
+  }, [supabase, router, toast]) // Dependencies for useCallback
 
-    setIsRedirecting(priceId)
+  useEffect(() => {
+    fetchUserData()
+  }, [fetchUserData]) // Run fetchUserData when the component mounts or fetchUserData changes
+
+  // Renamed function: Handles both initial checkout and subscription updates
+  const handlePlanChange = async (newPriceId: string) => {
+    setIsProcessing(newPriceId) // Indicate processing started for this priceId
 
     try {
-      const response = await fetch('/api/stripe/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ priceId }),
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(
-          `Failed to create checkout session: ${response.status} ${errorText}`
-        )
-      }
-
-      const { sessionId } = await response.json()
-
-      if (!sessionId) {
-        throw new Error('Received invalid session ID from server.')
-      }
-
-      // Redirect to Stripe Checkout
-      const { error } = await stripe.redirectToCheckout({ sessionId })
-
-      if (error) {
-        console.error('Stripe redirect error:', error)
-        toast({
-          variant: 'destructive',
-          title: 'Payment Redirect Error',
-          description: `Payment Error: ${error.message}`,
+      // If user has an existing subscription ID, update it
+      if (stripeSubscriptionId) {
+        const response = await fetch('/api/stripe/update-subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ newPriceId }), // Send the new price ID
         })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(
+            errorData.error ||
+              'Failed to update subscription. Please try again.'
+          )
+        }
+
+        // Success!
+        toast({
+          title: 'Subscription Updated',
+          description: 'Your plan has been successfully updated.',
+        })
+        // Refresh user data to show the new plan details
+        await fetchUserData()
+      } else {
+        // No existing subscription ID, proceed with creating a checkout session
+        if (!stripe) {
+          console.error('Stripe.js has not loaded yet.')
+          throw new Error(
+            'Payment system is not ready. Please try again shortly.'
+          )
+        }
+        const response = await fetch('/api/stripe/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ priceId: newPriceId }), // Use priceId here
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(
+            `Failed to create checkout session: ${response.status} ${errorText}`
+          )
+        }
+
+        const { sessionId } = await response.json()
+        if (!sessionId) {
+          throw new Error('Received invalid session ID from server.')
+        }
+
+        // Redirect to Stripe Checkout
+        const { error: stripeError } = await stripe.redirectToCheckout({
+          sessionId,
+        })
+        if (stripeError) {
+          throw stripeError // Let the catch block handle Stripe errors
+        }
+        // Redirect happens here, code below this won't execute on success
       }
-      // If redirect is successful, the user won't reach here.
     } catch (error: unknown) {
-      // Changed any to unknown
-      console.error('Checkout error:', error)
-      let errorMessage = 'An error occurred during checkout. Please try again.'
+      console.error('Plan change error:', error)
+      let errorMessage = 'An unexpected error occurred. Please try again.'
       if (error instanceof Error) {
         errorMessage = error.message
       }
       toast({
         variant: 'destructive',
-        title: 'Checkout Error',
+        title: 'Plan Change Failed',
         description: errorMessage,
       })
     } finally {
-      setIsRedirecting(null) // Clear loading state regardless of outcome
+      setIsProcessing(null) // Clear processing state
     }
   }
 
@@ -207,14 +231,17 @@ function UpgradePageContent() {
         </CardContent>
       </Card>
 
+      {/* Upgrade Plan Section - Renders if not on highest tier */}
       {subscription !== 'business_plus' && (
         <>
-          {/* Upgrade Plan Section */}
-          <h2 className="text-xl font-bold">Upgrade Your Plan</h2>
+          <h2 className="text-xl font-bold">
+            {stripeSubscriptionId ? 'Change Your Plan' : 'Choose Your Plan'}
+          </h2>
           <Card>
             <CardContent className="grid gap-6 md:grid-cols-2 pt-6">
-              {/* Pro Plan Card - Conditionally rendered based on current plan */}
-              {subscription === 'free' && (
+              {/* Pro Plan Card */}
+              {/* Show Pro card if on free OR if on pro (to allow switching billing cycle) */}
+              {(subscription === 'free' || subscription === 'pro') && (
                 <Card className="flex flex-col justify-between h-full">
                   <CardHeader>
                     <CardTitle>Pro Plan</CardTitle>
@@ -229,20 +256,23 @@ function UpgradePageContent() {
                   <div className="space-y-2 p-6 pt-0 mt-auto">
                     <Button
                       className="w-full bg-blue-600 hover:bg-blue-700"
-                      onClick={() => handleCheckout(PRICE_IDS.pro.monthly)}
-                      disabled={isRedirecting !== null}
+                      // Call handlePlanChange with the correct price ID
+                      onClick={() => handlePlanChange(PRICE_IDS.pro.monthly)}
+                      // Use isProcessing state
+                      disabled={isProcessing !== null}
                     >
-                      {isRedirecting === PRICE_IDS.pro.monthly
+                      {/* Check if this specific button is processing */}
+                      {isProcessing === PRICE_IDS.pro.monthly
                         ? 'Processing...'
                         : '$9 / month'}
                     </Button>
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => handleCheckout(PRICE_IDS.pro.yearly)}
-                      disabled={isRedirecting !== null}
+                      onClick={() => handlePlanChange(PRICE_IDS.pro.yearly)}
+                      disabled={isProcessing !== null}
                     >
-                      {isRedirecting === PRICE_IDS.pro.yearly
+                      {isProcessing === PRICE_IDS.pro.yearly
                         ? 'Processing...'
                         : '$81 / year (Save 25%)'}
                     </Button>
@@ -251,6 +281,7 @@ function UpgradePageContent() {
               )}
 
               {/* Business+ Plan Card */}
+              {/* Always show Business+ card if not already on it */}
               <Card className="flex flex-col justify-between h-full">
                 <CardHeader>
                   <CardTitle>Business+ Plan</CardTitle>
@@ -258,34 +289,34 @@ function UpgradePageContent() {
                 <CardContent className="space-y-4">
                   <ul className="list-disc list-inside space-y-1 text-sm">
                     <li>Unlimited audits</li>
-                    <li>All Pro features included</li>
-                    <li>Competitor benchmarking (future)</li>
-                    <li>Priority support (future)</li>
+                    <li>Advanced AI analysis features</li>
+                    <li>Dedicated account manager</li>
+                    <li>API Access (coming soon)</li>
                   </ul>
                 </CardContent>
                 <div className="space-y-2 p-6 pt-0 mt-auto">
                   <Button
                     className="w-full bg-purple-600 hover:bg-purple-700"
                     onClick={() =>
-                      handleCheckout(PRICE_IDS.business_plus.monthly)
+                      handlePlanChange(PRICE_IDS.business_plus.monthly)
                     }
-                    disabled={isRedirecting !== null}
+                    disabled={isProcessing !== null}
                   >
-                    {isRedirecting === PRICE_IDS.business_plus.monthly
+                    {isProcessing === PRICE_IDS.business_plus.monthly
                       ? 'Processing...'
-                      : '$38 / month'}
+                      : '$49 / month'}
                   </Button>
                   <Button
                     variant="outline"
                     className="w-full"
                     onClick={() =>
-                      handleCheckout(PRICE_IDS.business_plus.yearly)
+                      handlePlanChange(PRICE_IDS.business_plus.yearly)
                     }
-                    disabled={isRedirecting !== null}
+                    disabled={isProcessing !== null}
                   >
-                    {isRedirecting === PRICE_IDS.business_plus.yearly
+                    {isProcessing === PRICE_IDS.business_plus.yearly
                       ? 'Processing...'
-                      : '$342 / year (Save 25%)'}
+                      : '$468 / year (Save 25%)'}
                   </Button>
                 </div>
               </Card>
@@ -297,15 +328,10 @@ function UpgradePageContent() {
   )
 }
 
-// Main export wrapping content with Elements provider
+// Main page component that wraps content with Stripe Elements provider
 export default function UpgradePage() {
-  const options = {
-    // If using multiple Stripe accounts or specific options
-    // clientSecret: '...', // Example option if needed
-  }
-
   return (
-    <Elements stripe={stripePromise} options={options}>
+    <Elements stripe={stripePromise}>
       <UpgradePageContent />
     </Elements>
   )
