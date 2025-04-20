@@ -2,6 +2,14 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
 import { Elements, useStripe } from '@stripe/react-stripe-js'
@@ -14,6 +22,14 @@ const formatPlanName = (plan: string) => {
   if (plan === 'business_plus') return 'Business+'
   if (plan === 'pro') return 'Pro'
   return 'Free'
+}
+
+// Added interface for plan details
+interface PlanDetails {
+  priceId: string
+  planName: string
+  priceText: string
+  isYearly: boolean
 }
 
 // Price IDs from your Stripe setup - Replace with your actual IDs if different
@@ -33,7 +49,6 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
 )
 
-// New component to handle Stripe interactions within Elements provider
 function UpgradePageContent() {
   const [subscription, setSubscription] = useState<
     'free' | 'pro' | 'business_plus' | null
@@ -43,7 +58,11 @@ function UpgradePageContent() {
   >(null) // State for subscription ID
   const [auditsRemaining, setAuditsRemaining] = useState<number | null>(null)
   const [isLoadingData, setIsLoadingData] = useState(true)
-  const [isProcessing, setIsProcessing] = useState<string | null>(null) // Renamed from isRedirecting, handles both checkout and update
+  const [isProcessing, setIsProcessing] = useState<string | null>(null)
+  // Added state for confirmation dialog
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+  const [planToConfirm, setPlanToConfirm] = useState<PlanDetails | null>(null)
+
   const supabase = createClient()
   const router = useRouter()
   const stripe = useStripe() // Stripe hook for redirect
@@ -52,6 +71,8 @@ function UpgradePageContent() {
   // Wrap fetchUserData in useCallback to prevent re-creation on every render
   const fetchUserData = useCallback(async () => {
     setIsLoadingData(true)
+    // Reset processing state on data fetch
+    setIsProcessing(null)
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser()
       if (userError || !userData?.user) {
@@ -100,8 +121,16 @@ function UpgradePageContent() {
     fetchUserData()
   }, [fetchUserData]) // Run fetchUserData when the component mounts or fetchUserData changes
 
+  // Function to open the confirmation dialog
+  const openConfirmationDialog = (details: PlanDetails) => {
+    setPlanToConfirm(details)
+    setIsConfirmDialogOpen(true)
+  }
+
   // Renamed function: Handles both initial checkout and subscription updates
-  const handlePlanChange = async (newPriceId: string) => {
+  // Now called from the confirmation dialog
+  const handlePlanChangeConfirmed = async (newPriceId: string) => {
+    setIsConfirmDialogOpen(false) // Close dialog immediately
     setIsProcessing(newPriceId) // Indicate processing started for this priceId
 
     try {
@@ -179,7 +208,11 @@ function UpgradePageContent() {
         description: errorMessage,
       })
     } finally {
-      setIsProcessing(null) // Clear processing state
+      // Reset processing state regardless of outcome, fetchUserData will do it on success
+      // Only reset if it hasn't been reset by fetchUserData already
+      if (isProcessing === newPriceId) {
+        setIsProcessing(null)
+      }
     }
   }
 
@@ -240,7 +273,7 @@ function UpgradePageContent() {
           <Card>
             <CardContent className="grid gap-6 md:grid-cols-2 pt-6">
               {/* Pro Plan Card */}
-              {/* Show Pro card if on free OR if on pro (to allow switching billing cycle) */}
+              {/* Show Pro card if on free OR if on pro */}
               {(subscription === 'free' || subscription === 'pro') && (
                 <Card className="flex flex-col justify-between h-full">
                   <CardHeader>
@@ -254,36 +287,44 @@ function UpgradePageContent() {
                     <div className="space-y-2">
                       {/* Monthly Pro */}
                       <Button
-                        onClick={() => handlePlanChange(PRICE_IDS.pro.monthly)}
+                        onClick={() =>
+                          openConfirmationDialog({
+                            priceId: PRICE_IDS.pro.monthly,
+                            planName: 'Pro',
+                            priceText: '$9/month',
+                            isYearly: false,
+                          })
+                        }
                         disabled={
-                          isProcessing === PRICE_IDS.pro.monthly ||
-                          (subscription === 'pro' &&
-                            !stripeSubscriptionId?.includes('yr')) // Disable if already on monthly Pro
+                          isProcessing !== null || subscription === 'pro' // Disable if processing OR already on Pro
                         }
                         className="w-full"
                       >
                         {isProcessing === PRICE_IDS.pro.monthly
                           ? 'Processing...'
-                          : subscription === 'pro' &&
-                            !stripeSubscriptionId?.includes('yr')
+                          : subscription === 'pro' // Show current plan if on Pro
                           ? 'Current Plan'
                           : '$9/month'}
                       </Button>
                       {/* Yearly Pro */}
                       <Button
-                        onClick={() => handlePlanChange(PRICE_IDS.pro.yearly)}
+                        onClick={() =>
+                          openConfirmationDialog({
+                            priceId: PRICE_IDS.pro.yearly,
+                            planName: 'Pro (Annual)',
+                            priceText: 'Billed Annually (Save 25%)',
+                            isYearly: true,
+                          })
+                        }
                         disabled={
-                          isProcessing === PRICE_IDS.pro.yearly ||
-                          (subscription === 'pro' &&
-                            stripeSubscriptionId?.includes('yr')) // Disable if already on yearly Pro
+                          isProcessing !== null || subscription === 'pro' // Disable if processing OR already on Pro
                         }
                         className="w-full"
                         variant="outline"
                       >
                         {isProcessing === PRICE_IDS.pro.yearly
                           ? 'Processing...'
-                          : subscription === 'pro' &&
-                            stripeSubscriptionId?.includes('yr')
+                          : subscription === 'pro' // Show current plan if on Pro
                           ? 'Current Plan'
                           : 'Pay Annually & Save 25%'}
                       </Button>
@@ -300,8 +341,9 @@ function UpgradePageContent() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <ul className="list-disc list-inside space-y-1 text-sm">
-                    <li>Unlimited audits per month</li>
                     <li>All Pro features included</li>
+                    <li>Unlimited audits per month</li>
+                    {/* Placeholder features from specs */}
                     <li>Priority Support (Placeholder)</li>
                     <li>Competitor Benchmarks (Placeholder)</li>
                   </ul>
@@ -309,11 +351,14 @@ function UpgradePageContent() {
                     {/* Monthly Business+ */}
                     <Button
                       onClick={() =>
-                        handlePlanChange(PRICE_IDS.business_plus.monthly)
+                        openConfirmationDialog({
+                          priceId: PRICE_IDS.business_plus.monthly,
+                          planName: 'Business+',
+                          priceText: '$38/month',
+                          isYearly: false,
+                        })
                       }
-                      disabled={
-                        isProcessing === PRICE_IDS.business_plus.monthly
-                      }
+                      disabled={isProcessing !== null} // Only disable if processing
                       className="w-full"
                     >
                       {isProcessing === PRICE_IDS.business_plus.monthly
@@ -323,9 +368,14 @@ function UpgradePageContent() {
                     {/* Yearly Business+ */}
                     <Button
                       onClick={() =>
-                        handlePlanChange(PRICE_IDS.business_plus.yearly)
+                        openConfirmationDialog({
+                          priceId: PRICE_IDS.business_plus.yearly,
+                          planName: 'Business+ (Annual)',
+                          priceText: 'Billed Annually (Save 25%)',
+                          isYearly: true,
+                        })
                       }
-                      disabled={isProcessing === PRICE_IDS.business_plus.yearly}
+                      disabled={isProcessing !== null} // Only disable if processing
                       className="w-full"
                       variant="outline"
                     >
@@ -340,6 +390,45 @@ function UpgradePageContent() {
           </Card>
         </>
       )}
+
+      {/* Confirmation Dialog (using standard Dialog) */}
+      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Plan Change</DialogTitle>
+            <DialogDescription>
+              {planToConfirm &&
+                `Are you sure you want to ${
+                  stripeSubscriptionId ? 'change to' : 'subscribe to'
+                } the ${planToConfirm.planName} plan for ${
+                  planToConfirm.priceText
+                }?`}
+              {planToConfirm?.isYearly && ' You will be billed annually.'}
+              {!stripeSubscriptionId &&
+                ' You will be redirected to Stripe to complete your payment.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            {/* Use standard Buttons for Cancel/Confirm */}
+            <Button
+              variant="outline"
+              onClick={() => setIsConfirmDialogOpen(false)}
+              disabled={isProcessing !== null}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                planToConfirm &&
+                handlePlanChangeConfirmed(planToConfirm.priceId)
+              }
+              disabled={isProcessing !== null}
+            >
+              {isProcessing ? 'Processing...' : 'Confirm'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
