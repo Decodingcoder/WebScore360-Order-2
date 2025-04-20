@@ -34,7 +34,7 @@ type AuthContextType = {
 const defaultAuthContext: AuthContextType = {
   user: null,
   session: null,
-  isLoading: false,
+  isLoading: true, // Changed to true to prevent flash of unauthenticated content
   signOut: async () => {}, // No-op function for SSG
   signInWithEmail: async () => ({ error: null }),
   signUpWithEmail: async () => ({ error: null }),
@@ -48,13 +48,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const supabase = useSupabase()
 
+  // This effect fetches the initial session once on mount
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        setIsLoading(true)
         const {
           data: { session },
         } = await supabase.auth.getSession()
+
         if (session) {
           setSession(session)
           setUser(session.user)
@@ -62,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error('Error initializing auth:', error)
       } finally {
+        // Set loading to false only after initialization completes
         setIsLoading(false)
       }
     }
@@ -69,10 +71,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth()
   }, [supabase])
 
+  // This effect sets up the auth state change listener
   useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(
+        'Auth state changed:',
+        event,
+        session ? 'Session exists' : 'No session'
+      )
+
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setSession(session)
         setUser(session?.user ?? null)
@@ -91,6 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true)
       await supabase.auth.signOut()
+      // Explicitly clear the state after sign out
+      setSession(null)
+      setUser(null)
     } catch (error) {
       console.error('Error signing out:', error)
     } finally {

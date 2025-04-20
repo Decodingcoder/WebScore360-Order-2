@@ -3,7 +3,16 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // Routes that are public and don't require authentication
-const publicRoutes = ['/login', '/', '/auth/callback', '/signup']
+const publicRoutes = [
+  '/login',
+  '/',
+  '/auth/callback',
+  '/signup',
+  '/about',
+  '/privacy',
+  '/terms',
+  '/contact',
+]
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({
@@ -46,8 +55,13 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
+  // Check if the current route is public or matches any public route prefix
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  )
+
   // If not authenticated and trying to access a protected route, redirect to login
-  if (!session && !publicRoutes.some((route) => pathname.startsWith(route))) {
+  if (!session && !isPublicRoute) {
     const redirectUrl = new URL('/login', request.url)
     // Save the original URL to redirect after login
     redirectUrl.searchParams.set('next', pathname)
@@ -64,5 +78,7 @@ export async function middleware(request: NextRequest) {
 
 // Run middleware on all routes except static files
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|images|favicon.ico|logo.png).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|images|assets|favicon.ico|logo.png).*)',
+  ],
 }

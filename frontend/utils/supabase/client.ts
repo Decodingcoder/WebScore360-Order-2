@@ -17,7 +17,15 @@ export const createClient = () => {
 
   supabaseInstance = createSupabaseClient<Database>(
     supabaseUrl,
-    supabaseAnonKey
+    supabaseAnonKey,
+    {
+      auth: {
+        persistSession: true,
+        storageKey: 'supabase.auth.token',
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    }
   )
   return supabaseInstance
 }

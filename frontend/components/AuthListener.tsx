@@ -12,7 +12,14 @@ export default function AuthListener() {
   useEffect(() => {
     // Only handle navigation to login when session becomes null
     // (which happens on sign out in the AuthContext)
-    if (session === null && window.location.pathname !== '/login') {
+    // Don't redirect from home page or login page
+    const currentPath = window.location.pathname
+    if (
+      session === null &&
+      currentPath !== '/login' &&
+      currentPath !== '/' &&
+      !currentPath.startsWith('/auth/')
+    ) {
       router.push('/login')
     }
   }, [session, router])

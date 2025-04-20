@@ -4,7 +4,7 @@ import Header from '@/components/dashboard/Header'
 import Sidebar from '@/components/dashboard/Sidebar'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 // Force dynamic rendering for authenticated layouts
 export const dynamic = 'force-dynamic'
@@ -14,17 +14,30 @@ export default function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const { isLoading, session } = useAuth()
+  const { isLoading, session, user } = useAuth()
   const router = useRouter()
+  const [authChecked, setAuthChecked] = useState(false)
 
-  // If not authenticated after auth check completes, redirect to login
+  // Wait for authentication state to stabilize before redirecting
   useEffect(() => {
-    if (!isLoading && !session) {
-      router.push('/login')
-    }
-  }, [isLoading, session, router])
+    // Only consider auth check complete after loading has finished
+    if (!isLoading) {
+      // Add a small delay to ensure auth state is stable
+      const timer = setTimeout(() => {
+        setAuthChecked(true)
 
-  if (isLoading) {
+        // Redirect if no session after auth check completes
+        if (!session && !user) {
+          router.push('/login')
+        }
+      }, 500) // Short delay to ensure auth state is stable
+
+      return () => clearTimeout(timer)
+    }
+  }, [isLoading, session, user, router])
+
+  // Show loading state while authentication is being checked
+  if (isLoading || !authChecked) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="flex items-center space-x-2">
@@ -55,7 +68,7 @@ export default function DashboardLayout({
   }
 
   // Return null if not authenticated to prevent flash of dashboard before redirect
-  if (!session) {
+  if (!session && !user) {
     return null
   }
 
