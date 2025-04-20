@@ -1,26 +1,33 @@
 import { createClient } from '@/utils/supabase/server'
-import { NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
 // This route handler is specifically for the server-side authentication flow.
 // It exchanges an authorization code for a session.
-export async function GET(request: Request) {
-  console.log('Auth callback - Received request:', request.url)
-  const { searchParams, origin: requestOrigin } = new URL(request.url)
+export async function GET(request: NextRequest) {
+  // Use request.nextUrl for reliable access to search params behind proxies
+  const { searchParams } = request.nextUrl
   const code = searchParams.get('code')
-  // if "next" is in param, use it as the redirect URL
   const next = searchParams.get('next') ?? '/dashboard'
 
-  // Use environment variable for site URL, fallback to request origin
+  console.log(
+    `Auth callback - Received request. URL: ${
+      request.url
+    }, NextURL: ${request.nextUrl.toString()}`
+  )
+
+  // Use environment variable for site URL
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   if (!siteUrl) {
     console.error('Auth callback - Error: NEXT_PUBLIC_SITE_URL is not set.')
-    // Fallback or handle error appropriately - here redirecting to login with error
+    // Cannot safely redirect without siteUrl, might need a static error page
+    // For now, attempting redirect using origin from nextUrl as a fallback
+    const fallbackOrigin = request.nextUrl.origin
     return NextResponse.redirect(
-      `${requestOrigin}/login?message=Configuration error: Site URL not set`
+      `${fallbackOrigin}/login?message=Configuration error: Site URL not set`
     )
   }
   console.log(`Auth callback - Using site URL: ${siteUrl}`)
-  console.log(`Auth callback - Code: ${code}, Next: ${next}`)
+  console.log(`Auth callback - Code from nextUrl: ${code}, Next: ${next}`)
 
   if (code) {
     console.log('Auth callback - Attempting code exchange...')
@@ -30,13 +37,14 @@ export async function GET(request: Request) {
     if (!error) {
       console.log('Auth callback - Code exchange successful. Redirecting...')
       // Redirect to the specified path or dashboard after successful authentication.
-      // Using siteUrl ensures we redirect to the correct domain.
       return NextResponse.redirect(`${siteUrl}${next}`)
     } else {
       console.error('Auth callback - Code exchange failed:', error.message)
     }
   } else {
-    console.log('Auth callback - No code found in request URL.')
+    console.log(
+      'Auth callback - No code found in request nextUrl searchParams.'
+    )
   }
 
   // Redirect to login page if the code exchange fails or no code was present.
