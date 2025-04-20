@@ -12,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import UpgradeModal from '@/components/UpgradeModal'
 import { createClient } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { FileDown } from 'lucide-react'
@@ -46,8 +45,6 @@ export default function Dashboard() {
   const [auditsRemaining, setAuditsRemaining] = useState(1)
   const [latestAudit, setLatestAudit] = useState<Audit | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<'Pro' | 'Business+'>('Pro')
   const [recentAudits, setRecentAudits] = useState<Audit[]>([])
   const [totalAudits, setTotalAudits] = useState<number>(0)
   const supabase = createClient()
@@ -172,12 +169,6 @@ export default function Dashboard() {
     return <span className={`font-semibold ${color}`}>{Math.round(score)}</span>
   }
 
-  // Open upgrade modal with specific plan
-  const openUpgradeModal = (plan: 'Pro' | 'Business+') => {
-    setSelectedPlan(plan)
-    setUpgradeModalOpen(true)
-  }
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -246,11 +237,9 @@ export default function Dashboard() {
               <Button
                 variant="default"
                 className="bg-blue-600 hover:bg-blue-700"
-                onClick={() =>
-                  openUpgradeModal(subscription === 'pro' ? 'Business+' : 'Pro')
-                }
+                asChild
               >
-                Upgrade Plan
+                <Link href="/dashboard/upgrade">Upgrade Plan</Link>
               </Button>
             )}
           </div>
@@ -345,84 +334,68 @@ export default function Dashboard() {
       {/* Recent Audits */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Recent Audits</h2>
-        <Card>
-          <CardContent className="p-0">
-            {recentAudits.length > 0 ? (
-              <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Website</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="text-center">Score</TableHead>
-                      <TableHead className="text-right">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentAudits.map((audit) => (
-                      <TableRow key={audit.id}>
-                        <TableCell className="font-medium max-w-xs truncate">
-                          {audit.website_url}
-                        </TableCell>
-                        <TableCell>{formatDate(audit.created_at)}</TableCell>
-                        <TableCell className="text-center">
-                          {renderScore(audit.overall_score)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/dashboard/audits/${audit.id}`}>
-                              View Details
-                            </Link>
-                          </Button>
-                          {audit.report_pdf_url && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              asChild
-                              title="Download Report"
-                            >
-                              <a
-                                href={audit.report_pdf_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                download
-                              >
-                                <FileDown className="h-4 w-4 ml-1" />
-                              </a>
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <div className="text-sm text-gray-500 dark:text-gray-400 px-4 py-3 border-t border-gray-100 dark:border-gray-700">
-                  Showing {recentAudits.length} of {totalAudits} audits.{' '}
-                  {totalAudits > recentAudits.length && (
-                    <Link
-                      href="/dashboard/audits"
-                      className="text-blue-600 hover:underline"
-                    >
-                      View All
-                    </Link>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <p>You haven&apos;t analyzed any websites yet.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {recentAudits.length > 0 ? (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Website</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-center">Score</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentAudits.map((audit) => (
+                  <TableRow key={audit.id}>
+                    <TableCell className="font-medium max-w-xs truncate">
+                      {audit.website_url}
+                    </TableCell>
+                    <TableCell>{formatDate(audit.created_at)}</TableCell>
+                    <TableCell className="text-center">
+                      {renderScore(audit.overall_score)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {audit.report_pdf_url && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          asChild
+                          title="Download Report"
+                        >
+                          <a
+                            href={audit.report_pdf_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                          >
+                            <FileDown className="h-4 w-4 ml-1" />
+                          </a>
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="text-sm text-gray-500 dark:text-gray-400 px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+              Showing {recentAudits.length} of {totalAudits} audits.{' '}
+              {totalAudits > recentAudits.length && (
+                <Link
+                  href="/dashboard/audits"
+                  className="text-blue-600 hover:underline"
+                >
+                  View All
+                </Link>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <p>You haven&apos;t analyzed any websites yet.</p>
+          </div>
+        )}
       </div>
-
-      {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={upgradeModalOpen}
-        onClose={() => setUpgradeModalOpen(false)}
-        planName={selectedPlan}
-      />
     </div>
   )
 }
