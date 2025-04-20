@@ -5,6 +5,14 @@ import ScoreCard from '@/components/dashboard/ScoreCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   Table,
   TableBody,
   TableCell,
@@ -12,7 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { FileDown } from 'lucide-react'
@@ -52,18 +59,15 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { toast } = useToast()
+  const [showUpgradeSuccessDialog, setShowUpgradeSuccessDialog] =
+    useState(false)
 
   useEffect(() => {
     if (searchParams.get('upgraded') === 'true') {
-      toast({
-        title: 'Upgrade Successful!',
-        description: 'Your plan has been upgraded.',
-        variant: 'default',
-      })
+      setShowUpgradeSuccessDialog(true)
       router.replace('/dashboard', { scroll: false })
     }
-  }, [searchParams, router, toast])
+  }, [searchParams, router])
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -412,6 +416,27 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Upgrade Success Dialog */}
+      <Dialog
+        open={showUpgradeSuccessDialog}
+        onOpenChange={setShowUpgradeSuccessDialog}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upgrade Successful!</DialogTitle>
+            <DialogDescription>
+              Your plan has been successfully upgraded. You now have access to
+              your new features.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowUpgradeSuccessDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
