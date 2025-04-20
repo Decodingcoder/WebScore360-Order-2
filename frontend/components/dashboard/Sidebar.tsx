@@ -5,13 +5,36 @@ import { useAuth } from '@/contexts/AuthContext'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { signOut } = useAuth()
+
+  // Safe client-side only mounting
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Don't render sign out functionality during SSR
+  if (!isMounted) {
+    return (
+      <aside className="fixed md:static inset-y-0 left-0 z-20 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 md:translate-x-0 -translate-x-full">
+        <div className="p-4 flex flex-col h-full">
+          <div className="flex items-center gap-2 mb-8">
+            <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
+          </div>
+          <nav className="flex-1 space-y-1">
+            <div className="h-10 bg-gray-100 dark:bg-gray-800 rounded-lg mb-2" />
+            <div className="h-10 bg-gray-100 dark:bg-gray-800 rounded-lg" />
+          </nav>
+        </div>
+      </aside>
+    )
+  }
 
   const handleSignOut = async () => {
     try {

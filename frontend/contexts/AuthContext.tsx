@@ -30,7 +30,17 @@ type AuthContextType = {
   }>
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+// Create default values that are safe for SSG
+const defaultAuthContext: AuthContextType = {
+  user: null,
+  session: null,
+  isLoading: false,
+  signOut: async () => {}, // No-op function for SSG
+  signInWithEmail: async () => ({ error: null }),
+  signUpWithEmail: async () => ({ error: null }),
+}
+
+const AuthContext = createContext<AuthContextType>(defaultAuthContext)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -151,10 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+// Safe hook that works during both client-side rendering and SSG
 export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
+  return useContext(AuthContext)
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useAuth } from '@/contexts/AuthContext'
 import { useSupabase } from '@/hooks/useSupabase'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -15,15 +16,15 @@ export default function AuditsList() {
   const [audits, setAudits] = useState<Audit[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const supabase = useSupabase()
+  const { user, isLoading: authLoading } = useAuth()
 
   useEffect(() => {
+    // Don't fetch data until auth state is resolved
+    if (authLoading) return
+
     const fetchAudits = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (!session?.user) {
+        if (!user) {
           setIsLoading(false)
           return
         }
@@ -31,7 +32,7 @@ export default function AuditsList() {
         const { data, error } = await supabase
           .from('audits')
           .select('id, website_url, created_at, overall_score')
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(5)
 
@@ -46,7 +47,7 @@ export default function AuditsList() {
     }
 
     fetchAudits()
-  }, [supabase])
+  }, [supabase, user, authLoading])
 
   // Helper function to format date
   const formatDate = (dateString: string) => {
@@ -60,7 +61,7 @@ export default function AuditsList() {
     return 'text-red-600'
   }
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="flex justify-center py-8">
         <svg

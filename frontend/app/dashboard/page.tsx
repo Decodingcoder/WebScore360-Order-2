@@ -6,8 +6,13 @@ import ScoreCard from '@/components/dashboard/ScoreCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import UpgradeModal from '@/components/UpgradeModal'
+import { useAuth } from '@/contexts/AuthContext'
 import { useSupabase } from '@/hooks/useSupabase'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+
+// Force dynamic rendering for this authenticated page
+export const dynamic = 'force-dynamic'
 
 interface Audit {
   id: string
@@ -35,21 +40,28 @@ export default function Dashboard() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<'Pro' | 'Business+'>('Pro')
   const supabase = useSupabase()
+  const { user, isLoading: authLoading } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
+    // Redirect if not authenticated and auth is not loading
+    if (!authLoading && !user) {
+      router.push('/login')
+      return
+    }
+
+    // Don't fetch data until auth state is resolved
+    if (authLoading) return
+
     const fetchUserData = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (!session?.user) return
+        if (!user) return
 
         // Get user profile data
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .single()
 
         if (profile) {
@@ -61,7 +73,7 @@ export default function Dashboard() {
         const { data: audits } = await supabase
           .from('audits')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(1)
 
@@ -76,7 +88,7 @@ export default function Dashboard() {
     }
 
     fetchUserData()
-  }, [supabase])
+  }, [supabase, user, authLoading, router])
 
   // Helper function to render traffic light color based on score
   const getScoreColor = (score: number) => {
@@ -91,7 +103,7 @@ export default function Dashboard() {
     setUpgradeModalOpen(true)
   }
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <svg
@@ -116,6 +128,12 @@ export default function Dashboard() {
         </svg>
       </div>
     )
+  }
+
+  // If no user is found after loading completes, redirect to login
+  if (!user) {
+    router.push('/login')
+    return null
   }
 
   return (

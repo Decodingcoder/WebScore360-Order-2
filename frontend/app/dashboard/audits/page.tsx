@@ -76,6 +76,9 @@ const testAudits = [
   },
 ]
 
+// Force dynamic rendering for this authenticated page
+export const dynamic = 'force-dynamic'
+
 export default function AuditsPage() {
   const [audits] = useState(testAudits)
 

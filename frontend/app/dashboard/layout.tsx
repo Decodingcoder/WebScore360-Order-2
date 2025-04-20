@@ -6,6 +6,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
+// Force dynamic rendering for authenticated layouts
+export const dynamic = 'force-dynamic'
+
 export default function DashboardLayout({
   children,
 }: Readonly<{
