@@ -1,25 +1,18 @@
 'use client'
 
 import { Footer } from '@/components/Footer'
-import UpgradeModal from '@/components/UpgradeModal'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 
 export default function PricingPage() {
-  const [isAnnual, setIsAnnual] = useState(false)
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<'Pro' | 'Business+'>('Pro')
-
-  // Function to open the upgrade modal
-  const openUpgradeModal = (plan: 'Pro' | 'Business+') => {
-    setSelectedPlan(plan)
-    setUpgradeModalOpen(true)
-  }
+  const [billingInterval, setBillingInterval] = useState<'month' | 'year'>(
+    'month'
+  )
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="relative isolate overflow-hidden bg-gray-50 dark:bg-gray-900">
       <header className="container mx-auto py-6 px-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2">
           <Image
@@ -49,7 +42,9 @@ export default function PricingPage() {
           {/* Billing toggle */}
           <div className="flex items-center justify-center gap-2 mb-8">
             <span
-              className={`text-sm ${!isAnnual ? 'font-bold' : 'text-gray-500'}`}
+              className={`text-sm ${
+                billingInterval === 'month' ? 'font-bold' : 'text-gray-500'
+              }`}
             >
               Monthly
             </span>
@@ -57,23 +52,29 @@ export default function PricingPage() {
               variant="outline"
               size="sm"
               className={`relative h-8 w-16 px-0 ${
-                isAnnual ? 'bg-blue-50 dark:bg-blue-900/30' : ''
+                billingInterval === 'year'
+                  ? 'bg-blue-50 dark:bg-blue-900/30'
+                  : ''
               }`}
-              onClick={() => setIsAnnual(!isAnnual)}
+              onClick={() => setBillingInterval('year')}
             >
               <span
                 className={`absolute inset-0 h-full w-1/2 rounded-md bg-blue-600 transition-all ${
-                  isAnnual ? 'translate-x-full -ml-1.5' : 'translate-x-0 ml-0.5'
+                  billingInterval === 'year'
+                    ? 'translate-x-full -ml-1.5'
+                    : 'translate-x-0 ml-0.5'
                 }`}
               />
               <span className="sr-only">
-                {isAnnual
+                {billingInterval === 'year'
                   ? 'Switch to monthly billing'
                   : 'Switch to annual billing'}
               </span>
             </Button>
             <span
-              className={`text-sm ${isAnnual ? 'font-bold' : 'text-gray-500'}`}
+              className={`text-sm ${
+                billingInterval === 'year' ? 'font-bold' : 'text-gray-500'
+              }`}
             >
               Annual{' '}
               <span className="text-green-600 dark:text-green-400 font-medium">
@@ -197,13 +198,13 @@ export default function PricingPage() {
               <h3 className="text-2xl font-bold">Pro</h3>
               <div className="flex items-baseline mt-2">
                 <span className="text-5xl font-extrabold">
-                  {isAnnual ? '$81' : '$9'}
+                  {billingInterval === 'year' ? '$81' : '$9'}
                 </span>
                 <span className="ml-1 text-gray-500 dark:text-gray-400">
-                  {isAnnual ? '/year' : '/month'}
+                  {billingInterval === 'year' ? '/year' : '/month'}
                 </span>
               </div>
-              {isAnnual ? (
+              {billingInterval === 'year' ? (
                 <p className="mt-2 text-sm text-green-600 dark:text-green-400 font-medium">
                   Save $27 per year
                 </p>
@@ -304,9 +305,9 @@ export default function PricingPage() {
               <Button
                 variant="default"
                 className="w-full mt-8 bg-blue-600 hover:bg-blue-700"
-                onClick={() => openUpgradeModal('Pro')}
+                asChild
               >
-                Get Started with Pro
+                <Link href="/login">Get Started</Link>
               </Button>
             </div>
           </div>
@@ -317,13 +318,13 @@ export default function PricingPage() {
               <h3 className="text-2xl font-bold">Business+</h3>
               <div className="flex items-baseline mt-2">
                 <span className="text-5xl font-extrabold">
-                  {isAnnual ? '$342' : '$38'}
+                  {billingInterval === 'year' ? '$342' : '$38'}
                 </span>
                 <span className="ml-1 text-gray-500 dark:text-gray-400">
-                  {isAnnual ? '/year' : '/month'}
+                  {billingInterval === 'year' ? '/year' : '/month'}
                 </span>
               </div>
-              {isAnnual ? (
+              {billingInterval === 'year' ? (
                 <p className="mt-2 text-sm text-green-600 dark:text-green-400 font-medium">
                   Save $114 per year
                 </p>
@@ -424,9 +425,9 @@ export default function PricingPage() {
               <Button
                 variant="default"
                 className="w-full mt-8 bg-purple-600 hover:bg-purple-700"
-                onClick={() => openUpgradeModal('Business+')}
+                asChild
               >
-                Get Business+
+                <Link href="/login">Get Started</Link>
               </Button>
             </div>
           </div>
@@ -719,13 +720,6 @@ export default function PricingPage() {
       <div className="mt-12">
         <Footer />
       </div>
-
-      {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={upgradeModalOpen}
-        onClose={() => setUpgradeModalOpen(false)}
-        planName={selectedPlan}
-      />
     </div>
   )
 }

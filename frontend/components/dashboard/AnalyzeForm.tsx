@@ -1,9 +1,9 @@
 'use client'
 
-import UpgradeModal from '@/components/UpgradeModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/utils/supabase/client'
+import Link from 'next/link'
 import { useState } from 'react'
 
 interface AnalyzeFormProps {
@@ -19,15 +19,10 @@ export default function AnalyzeForm({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const supabase = createClient()
 
   // Check if the user can run an audit based on remaining count
   const canRunAudit = auditsRemaining > 0 || subscription === 'business_plus'
-
-  // Determine which plan to suggest for upgrade
-  const recommendedPlan: 'Pro' | 'Business+' =
-    subscription === 'pro' ? 'Business+' : 'Pro'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -196,25 +191,17 @@ export default function AnalyzeForm({
             </svg>
             <span>
               You have no audits remaining.{' '}
-              <Button
-                variant="link"
-                className="p-0 h-auto underline text-yellow-700 dark:text-yellow-300"
-                onClick={() => setUpgradeModalOpen(true)}
+              <Link
+                href="/dashboard/upgrade"
+                className="underline font-medium text-yellow-700 dark:text-yellow-300 hover:text-yellow-800 dark:hover:text-yellow-200"
               >
                 Upgrade your plan
-              </Button>{' '}
+              </Link>{' '}
               to run more audits.
             </span>
           </div>
         )}
       </form>
-
-      {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={upgradeModalOpen}
-        onClose={() => setUpgradeModalOpen(false)}
-        planName={recommendedPlan}
-      />
     </>
   )
 }
