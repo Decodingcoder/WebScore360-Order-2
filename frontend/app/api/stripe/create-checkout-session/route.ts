@@ -1,24 +1,44 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/server' // We'll create this helper next
 import { getURL } from '@/lib/helpers' // Helper to construct absolute URLs
+import { createClient } from '@/utils/supabase/server'
 
 export async function POST(request: Request) {
+  console.log('API Route: /api/stripe/create-checkout-session hit') // Log entry
   const { priceId } = await request.json()
 
   if (!priceId) {
+    console.error('API Route Error: Missing priceId')
     return new NextResponse('Missing priceId', { status: 400 })
   }
 
-  const supabase = createRouteHandlerClient({ cookies })
+  // Create Supabase client for Route Handler
+  const supabase = await createClient()
+
+  console.log('API Route: Attempting to get user...') // Log before getUser
   const {
     data: { user },
+    error: getUserError, // Capture potential error from getUser
   } = await supabase.auth.getUser()
 
+  if (getUserError) {
+    console.error(
+      'API Route Error: supabase.auth.getUser() failed:',
+      getUserError
+    )
+    return new NextResponse('Internal Server Error getting user', {
+      status: 500,
+    })
+  }
+
   if (!user) {
+    console.error(
+      'API Route Error: User is not authenticated (user object is null).'
+    ) // Log specific reason for 401
     return new NextResponse('Unauthorized', { status: 401 })
   }
+
+  console.log(`API Route: User authenticated: ${user.id}`) // Log successful auth
 
   try {
     // Check if user already has a stripe_customer_id in profiles
