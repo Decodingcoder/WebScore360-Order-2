@@ -1,7 +1,22 @@
 import { createClient } from '@/utils/supabase/server'
+
 import { NextResponse } from 'next/server'
 
+// NOTE: Ensure these environment variables are set in your deployment!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
 export async function POST(request: Request) {
+  // Validate environment variables
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    console.error('Missing Supabase environment variables')
+    return NextResponse.json(
+      { error: 'Server configuration error.' },
+      { status: 500 }
+    )
+  }
+
+  // Create a client with the SERVICE ROLE KEY
   const supabase = await createClient()
 
   try {
@@ -47,8 +62,6 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
-
-    // According to user request, don't push to Redis queue here yet.
 
     // Return a simple success response. Frontend will handle redirect.
     // Returning the created audit ID might be useful later.
