@@ -1,7 +1,6 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
-import { useSupabase } from '@/hooks/useSupabase'
+import { createClient } from '@/utils/supabase/client'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -15,16 +14,20 @@ interface Audit {
 export default function AuditsList() {
   const [audits, setAudits] = useState<Audit[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = useSupabase()
-  const { user, isLoading: authLoading } = useAuth()
+  const supabase = createClient()
 
   useEffect(() => {
-    // Don't fetch data until auth state is resolved
-    if (authLoading) return
-
-    const fetchAudits = async () => {
+    const fetchData = async () => {
+      setIsLoading(true)
       try {
-        if (!user) {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser()
+
+        if (userError || !user) {
+          console.error('Error fetching user or user not found:', userError)
+          setAudits([])
           setIsLoading(false)
           return
         }
@@ -41,13 +44,14 @@ export default function AuditsList() {
         setAudits(data || [])
       } catch (error) {
         console.error('Error fetching audits:', error)
+        setAudits([])
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchAudits()
-  }, [supabase, user, authLoading])
+    fetchData()
+  }, [supabase])
 
   // Helper function to format date
   const formatDate = (dateString: string) => {
@@ -61,7 +65,7 @@ export default function AuditsList() {
     return 'text-red-600'
   }
 
-  if (authLoading || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-8">
         <svg

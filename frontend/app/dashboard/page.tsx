@@ -6,8 +6,8 @@ import ScoreCard from '@/components/dashboard/ScoreCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import UpgradeModal from '@/components/UpgradeModal'
-import { useAuth } from '@/contexts/AuthContext'
-import { useSupabase } from '@/hooks/useSupabase'
+import { createClient } from '@/utils/supabase/client'
+import type { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -39,29 +39,32 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<'Pro' | 'Business+'>('Pro')
-  const supabase = useSupabase()
-  const { user, isLoading: authLoading } = useAuth()
+  const supabase = createClient()
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    // Redirect if not authenticated and auth is not loading
-    if (!authLoading && !user) {
-      router.push('/login')
-      return
-    }
-
-    // Don't fetch data until auth state is resolved
-    if (authLoading) return
-
     const fetchUserData = async () => {
+      setIsLoading(true)
       try {
-        if (!user) return
+        // Get user first
+        const {
+          data: { user: fetchedUser },
+          error: userError,
+        } = await supabase.auth.getUser()
+
+        if (userError || !fetchedUser) {
+          console.error('Error fetching user or user not logged in:', userError)
+          router.push('/login') // Redirect if no user
+          return
+        }
+        setUser(fetchedUser) // Set user state
 
         // Get user profile data
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', fetchedUser.id)
           .single()
 
         if (profile) {
@@ -73,7 +76,7 @@ export default function Dashboard() {
         const { data: audits } = await supabase
           .from('audits')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', fetchedUser.id)
           .order('created_at', { ascending: false })
           .limit(1)
 
@@ -88,7 +91,7 @@ export default function Dashboard() {
     }
 
     fetchUserData()
-  }, [supabase, user, authLoading, router])
+  }, [supabase, router])
 
   // Helper function to render traffic light color based on score
   const getScoreColor = (score: number) => {
@@ -103,7 +106,7 @@ export default function Dashboard() {
     setUpgradeModalOpen(true)
   }
 
-  if (authLoading || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <svg
@@ -130,9 +133,7 @@ export default function Dashboard() {
     )
   }
 
-  // If no user is found after loading completes, redirect to login
   if (!user) {
-    router.push('/login')
     return null
   }
 

@@ -3,8 +3,7 @@
 import UpgradeModal from '@/components/UpgradeModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useAuth } from '@/contexts/AuthContext'
-import { useSupabase } from '@/hooks/useSupabase'
+import { createClient } from '@/utils/supabase/client'
 import { useState } from 'react'
 
 interface AnalyzeFormProps {
@@ -21,8 +20,7 @@ export default function AnalyzeForm({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
-  const supabase = useSupabase()
-  const { user } = useAuth()
+  const supabase = createClient()
 
   // Check if the user can run an audit based on remaining count
   const canRunAudit = auditsRemaining > 0 || subscription === 'business_plus'
@@ -43,6 +41,16 @@ export default function AnalyzeForm({
     setError(null)
 
     try {
+      // Get user first
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      if (userError || !user) {
+        throw new Error('You must be logged in to analyze a website')
+      }
+
       // Validate URL format
       if (
         !websiteUrl.match(
@@ -52,10 +60,6 @@ export default function AnalyzeForm({
         throw new Error(
           'Please enter a valid website URL (including http:// or https://)'
         )
-      }
-
-      if (!user) {
-        throw new Error('You must be logged in to analyze a website')
       }
 
       // Create a new audit record with proper user authentication
