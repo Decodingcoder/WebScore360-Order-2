@@ -161,6 +161,94 @@ serve(async (req: Request) => {
       })
     }
   }
+  // Handle subscription cancellation
+  else if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object as Stripe.Subscription // Cast to Stripe Subscription type
+    const stripeCustomerId = subscription.customer as string
+
+    if (!stripeCustomerId) {
+      console.error(
+        'Webhook Error: Missing customer ID in customer.subscription.deleted event.',
+        subscription.id
+      )
+      // Don't return 500, as the event data is incomplete
+      return new Response('Webhook Error: Missing customer ID.', {
+        status: 400,
+      })
+    }
+
+    console.log(
+      `Processing subscription cancellation for Stripe Customer ID: ${stripeCustomerId}`
+    )
+
+    try {
+      // Initialize Supabase client with elevated privileges
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      )
+
+      // Find the user by Stripe Customer ID
+      const { data: profile, error: findError } = await supabaseAdmin
+        .from('profiles')
+        .select('id') // Select the user id
+        .eq('stripe_customer_id', stripeCustomerId)
+        .single() // Expecting only one user per customer ID
+
+      if (findError) {
+        // If user not found, it might be an old customer or data mismatch, log but acknowledge
+        console.error(
+          `Webhook Info: Profile not found for stripe_customer_id ${stripeCustomerId}. Error: ${findError.message}`
+        )
+        return new Response(
+          JSON.stringify({ received: true, status: 'Profile not found' }),
+          {
+            status: 200, // Acknowledge webhook even if profile not found
+            headers: { 'Content-Type': 'application/json' },
+          }
+        )
+      }
+
+      if (profile) {
+        const userId = profile.id
+        console.log(`Found user ${userId} for cancellation.`)
+
+        // Update the user's profile to downgrade to free tier
+        const { error: updateError } = await supabaseAdmin
+          .from('profiles')
+          .update({
+            subscription_tier: 'free',
+            // Optionally clear stripe_customer_id or set an end date
+            // stripe_customer_id: null,
+          })
+          .eq('id', userId)
+
+        if (updateError) {
+          throw updateError // Let the outer catch handle DB errors for retry
+        }
+
+        console.log(
+          `Successfully downgraded profile for user ${userId} to free tier.`
+        )
+      } else {
+        // This case should ideally be covered by findError check with .single()
+        console.warn(
+          `Webhook Warning: Profile lookup returned null unexpectedly for stripe_customer_id ${stripeCustomerId}`
+        )
+      }
+    } catch (dbError) {
+      console.error(
+        `Database error during cancellation for Stripe Customer ${stripeCustomerId}: ${dbError.message}`
+      )
+      // Return 500 so Stripe retries the webhook
+      return new Response(
+        `Webhook Error: Database update failed during cancellation.`,
+        {
+          status: 500,
+        }
+      )
+    }
+  }
   // Handle other event types if needed in the future
   // else if (event.type === 'invoice.paid') { ... }
 
@@ -173,14 +261,5 @@ serve(async (req: Request) => {
 
 /* 
 TODO List for this function:
-- [X] Import Stripe Deno library.
-- [X] Initialize Supabase client.
-- [X] Get STRIPE_WEBHOOK_SECRET from env.
-- [X] Verify Stripe signature.
-- [X] Handle event type `checkout.session.completed`.
-- [X] Extract user_id from metadata and stripe_customer_id.
-- [X] Extract purchased price ID to determine new tier.
-- [X] Update the user's profile in Supabase DB.
-- [X] Add error handling for DB updates.
-- Consider adding handling for subscription cancellations/updates later.
+- Consider adding handling for subscription updates later.
 */
