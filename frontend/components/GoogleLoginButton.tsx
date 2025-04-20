@@ -21,12 +21,14 @@ export default function GoogleLoginButton() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
+          redirectTo: 'https://webscore360-frontend.onrender.com/auth/callback',
           // queryParams: { // Temporarily removed for debugging
           //   access_type: 'offline',
           //   prompt: 'consent',
           // },
         },
       })
+      console.log('GoogleLoginButton - signInWithOAuth call initiated', error)
 
       if (error) throw error
     } catch (err) {
