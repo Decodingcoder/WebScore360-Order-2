@@ -1,6 +1,7 @@
 'use client'
 
 import { login, signup } from '@/app/login/actions'
+import OneTapComponent from '@/components/auth/OneTapComponent'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -114,26 +115,7 @@ export default function AuthForm() {
               : 'Create Account'}
           </Button>
 
-          <div
-            id="g_id_onload"
-            data-client_id="845104135306-8k7qjt5d95nqtbu034ql1f2g0ih167n0.apps.googleusercontent.com"
-            data-context="signin"
-            data-ux_mode="popup"
-            data-callback="handleSignInWithGoogle"
-            data-auto_prompt="false"
-          ></div>
-
-          <div
-            className="g_id_signin"
-            data-type="standard"
-            data-shape="rectangular"
-            data-theme="outline"
-            data-text="continue_with"
-            data-size="large"
-            data-logo_alignment="left"
-            data-width="400"
-          ></div>
-
+          <OneTapComponent />
           <div className="text-center">
             <button
               type="button"
