@@ -15,8 +15,10 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: ['localhost:3000'],
     },
-    // Optimize for faster client-side navigation
-    ppr: true,
+  },
+  // Added from next.config.mjs
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 }
 
