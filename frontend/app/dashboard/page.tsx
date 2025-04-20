@@ -324,10 +324,6 @@ export default function Dashboard() {
                   <p className="text-muted-foreground break-all">
                     {latestAudit.website_url}
                   </p>
-                  <p className="text-sm text-muted-foreground pt-2">
-                    This may take a few minutes. The results will appear here
-                    automatically.
-                  </p>
                 </CardContent>
               </Card>
             )
@@ -491,7 +487,7 @@ export default function Dashboard() {
                     ))}
                   </TableBody>
                 </Table>
-                <div className="text-sm text-gray-500 dark:text-gray-400 px-4 py-3">
+                <div className="text-sm text-gray-500 dark:text-gray-400 px-3 py-3">
                   Showing {recentAudits.length} of {totalAudits} audits.{' '}
                   {totalAudits > recentAudits.length && (
                     <Link
