@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS audits (
   branding_score SMALLINT,
   presence_score SMALLINT,
   report_pdf_url TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
   raw_data JSONB
 );
 
@@ -48,11 +49,18 @@ CREATE POLICY "Users can view their own audits"
   USING (auth.uid() = user_id OR requested_email = (SELECT email FROM profiles WHERE id = auth.uid()));
 
 -- Create triggers
-CREATE OR REPLACE FUNCTION handle_new_user()
+-- Improve the user creation trigger function to be more resilient
+CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO profiles (id, email)
-  VALUES (NEW.id, NEW.email);
+  -- Try to insert, but don't fail if there's an error
+  BEGIN
+    INSERT INTO public.profiles (id, email)
+    VALUES (NEW.id, NEW.email);
+  EXCEPTION WHEN OTHERS THEN
+    -- Log the error but continue (don't block auth)
+    RAISE LOG 'Error creating profile: %', SQLERRM;
+  END;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
