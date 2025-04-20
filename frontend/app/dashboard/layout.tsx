@@ -2,9 +2,10 @@
 
 import Header from '@/components/dashboard/Header'
 import Sidebar from '@/components/dashboard/Sidebar'
-import { useAuth } from '@/contexts/AuthContext'
+import { createClient } from '@/utils/supabase/client'
+import type { Session, User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 // Force dynamic rendering for authenticated layouts
 export const dynamic = 'force-dynamic'
@@ -14,24 +15,54 @@ export default function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const { isLoading, session, user } = useAuth()
+  const [isLoading, setIsLoading] = useState(true)
+  const [session, setSession] = useState<Session | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const supabase = createClient()
   const router = useRouter()
 
-  // Redirect logic simplified: runs when loading is complete
   useEffect(() => {
-    // Wait until the AuthContext has finished its initial check
-    if (!isLoading) {
-      // If loading is done AND we still don't have a session or user, redirect
-      if (!session && !user) {
+    const checkAuth = async () => {
+      setIsLoading(true)
+      const {
+        data: { session: fetchedSession },
+        error: sessionError,
+      } = await supabase.auth.getSession()
+      const {
+        data: { user: fetchedUser },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      setSession(fetchedSession)
+      setUser(fetchedUser)
+
+      if (!fetchedSession || !fetchedUser || sessionError || userError) {
         console.log(
-          'Auth check complete, no session/user found, redirecting to login'
+          'Auth check failed or user not found, redirecting to login',
+          { sessionError, userError }
         )
         router.push('/login')
       }
+      setIsLoading(false)
     }
-  }, [isLoading, session, user, router]) // Depend only on the authoritative state
 
-  // Show loading state while authentication is being checked from AuthContext
+    checkAuth()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession)
+      setUser(newSession?.user ?? null)
+      if (!newSession) {
+        router.push('/login')
+      }
+    })
+
+    return () => {
+      subscription?.unsubscribe()
+    }
+  }, [supabase, router])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -62,10 +93,7 @@ export default function DashboardLayout({
     )
   }
 
-  // If loading is done but we still don't have a user/session,
-  // the useEffect above will trigger a redirect. Render null briefly
-  // to avoid flashing the layout before redirect.
-  if (!session && !user) {
+  if (!session || !user) {
     return null
   }
 

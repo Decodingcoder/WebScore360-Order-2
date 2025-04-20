@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/contexts/AuthContext'
+import { createClient } from '@/utils/supabase/client'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -12,7 +12,7 @@ export default function Sidebar() {
   const [isMounted, setIsMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const { signOut } = useAuth()
+  const supabase = createClient()
 
   // Safe client-side only mounting
   useEffect(() => {
@@ -38,7 +38,8 @@ export default function Sidebar() {
 
   const handleSignOut = async () => {
     try {
-      await signOut()
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
       router.push('/')
       router.refresh()
     } catch (error) {

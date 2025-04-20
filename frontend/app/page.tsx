@@ -6,20 +6,44 @@ import { GridPattern } from '@/components/magicui/grid-pattern'
 import { ShineBorder } from '@/components/magicui/shine-border'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/utils/supabase/client'
+import type { Session } from '@supabase/supabase-js'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 export default function Home() {
-  const { session } = useAuth()
+  const [session, setSession] = useState<Session | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const supabase = createClient()
 
   // Handle client-side only rendering for auth check
   useEffect(() => {
     setMounted(true)
-  }, [])
+
+    const getSessionData = async () => {
+      setIsLoading(true)
+      const {
+        data: { session: fetchedSession },
+      } = await supabase.auth.getSession()
+      setSession(fetchedSession)
+      setIsLoading(false)
+    }
+    getSessionData()
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => {
+      subscription?.unsubscribe()
+    }
+  }, [supabase])
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -37,7 +61,9 @@ export default function Home() {
             </Link>
           </div>
           <nav className="flex gap-3">
-            {mounted && session ? (
+            {!mounted || isLoading ? (
+              <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
+            ) : session ? (
               <Button variant="outline" size="sm" asChild>
                 <Link href="/dashboard">Dashboard</Link>
               </Button>

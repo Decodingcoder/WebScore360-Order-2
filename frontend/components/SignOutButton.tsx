@@ -1,19 +1,20 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/contexts/AuthContext'
+import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function SignOutButton() {
-  const { signOut } = useAuth()
+  const supabase = createClient()
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
   const handleSignOut = async () => {
     try {
       setIsLoading(true)
-      await signOut()
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
       router.push('/')
       router.refresh()
     } catch (error) {

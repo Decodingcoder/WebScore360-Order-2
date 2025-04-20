@@ -1,11 +1,10 @@
 'use client'
 
+import { login, signup } from '@/app/login/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuth } from '@/contexts/AuthContext'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 type AuthMode = 'signin' | 'signup' | 'verification'
@@ -16,8 +15,6 @@ export default function AuthForm() {
   const [mode, setMode] = useState<AuthMode>('signin')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { signInWithEmail, signUpWithEmail } = useAuth()
-  const router = useRouter()
 
   const toggleMode = () => {
     setMode(mode === 'signin' ? 'signup' : 'signin')
@@ -29,28 +26,20 @@ export default function AuthForm() {
     setIsLoading(true)
     setError(null)
 
+    const formData = new FormData()
+    formData.append('email', email)
+    formData.append('password', password)
+
     try {
       if (mode === 'signin') {
-        const { error } = await signInWithEmail(email, password)
-        if (error) {
-          setError(error.message)
-        } else {
-          router.push('/dashboard')
-          router.refresh()
-        }
+        await login(formData)
       } else {
-        const { error } = await signUpWithEmail(email, password)
-        if (error) {
-          setError(error.message)
-        } else {
-          setError(null)
-          // Show success message and prompt to check email
-          setMode('verification')
-        }
+        await signup(formData)
+        setMode('verification')
       }
     } catch (err) {
-      setError('An unexpected error occurred')
-      console.error(err)
+      console.error('Client-side auth form error:', err)
+      setError('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)
     }
