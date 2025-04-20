@@ -3,13 +3,18 @@ import { logger } from '../utils/logger'
 import { AnalysisResult } from '../analysis/analyzer'
 import { renderPdfFromTemplate } from './renderer'
 
+interface GeneratePdfResult {
+  pdfBuffer: Buffer
+  pdfUrl: string
+}
+
 /**
  * Generate a PDF report for the analysis result
  */
 export async function generatePdf(
   websiteUrl: string,
   analysisResult: AnalysisResult
-): Promise<string> {
+): Promise<GeneratePdfResult> {
   logger.info(`Generating PDF report for ${websiteUrl}`)
 
   try {
@@ -19,7 +24,8 @@ export async function generatePdf(
     // Store the PDF in Supabase Storage
     const pdfUrl = await storePdf(pdfBuffer, websiteUrl, analysisResult)
 
-    return pdfUrl
+    // Return both buffer and URL
+    return { pdfBuffer, pdfUrl }
   } catch (error) {
     logger.error(`Error generating PDF for ${websiteUrl}`, { error })
     throw new Error(

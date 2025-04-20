@@ -3,7 +3,7 @@ import { logger } from '../utils/logger'
 import { supabase } from '../config/supabase'
 import { analyzeWebsite } from '../analysis/analyzer'
 import { generatePdf } from '../pdf/generator'
-import { sendReportEmail } from '../services/email'
+import { sendEmail } from '../services/mailer'
 
 interface AnalysisJob {
   websiteUrl: string
@@ -34,17 +34,35 @@ export async function processWebsiteAnalysis(job: Job<AnalysisJob>) {
 
     // Step 3: Generate PDF report
     logger.info(`Generating PDF report for ${websiteUrl}`)
-    const pdfUrl = await generatePdf(websiteUrl, analysisResult)
+    const { pdfBuffer, pdfUrl } = await generatePdf(websiteUrl, analysisResult)
 
     // Step 4: Update database with PDF URL
     logger.info(`Updating audit with PDF URL: ${pdfUrl}`)
     await updateAuditWithPdfUrl(auditId, pdfUrl)
 
-    // REMOVED Step 5: Send email with report
-    // We're skipping email sending since we don't have SMTP credentials
-    logger.info(
-      `Skipping email sending to ${userEmail} due to lack of SMTP credentials`
-    )
+    // Step 5: Send email with report via MailerSend
+    try {
+      logger.info(`Sending report email to ${userEmail}`)
+      await sendEmail({
+        to: userEmail,
+        subject: `Your WebScore360 Report for ${websiteUrl} is ready!`,
+        htmlBody: `<p>Hello,</p><p>Your WebScore360 analysis for <strong>${websiteUrl}</strong> is complete.</p><p>You can also view the report online here: <a href="${pdfUrl}">${pdfUrl}</a></p><p>The PDF report is attached to this email.</p><p>Thank you,<br>The WebScore360 Team</p>`,
+        pdfAttachment: {
+          content: pdfBuffer,
+          filename: `WebScore360_Report_${websiteUrl.replace(
+            /[^a-zA-Z0-9]/g,
+            '_'
+          )}.pdf`,
+        },
+      })
+      logger.info(`Report email sent successfully to ${userEmail}`)
+    } catch (emailError) {
+      logger.error(`Failed to send report email to ${userEmail}`, {
+        emailError,
+      })
+      // Decide if this should be a critical failure or just logged
+      // For now, we log the error but continue to mark the audit as completed
+    }
 
     // Step 6: Update audit status to completed
     await updateAuditStatus(auditId, 'completed')
