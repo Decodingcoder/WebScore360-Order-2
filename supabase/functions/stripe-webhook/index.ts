@@ -1,10 +1,10 @@
 // supabase/functions/stripe-webhook/index.ts
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 // Import Supabase client library
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // Import Stripe library
-import Stripe from 'https://esm.sh/stripe@11.1.0?target=deno&deno-std=0.132.0' // Use deno compatible version
+import Stripe from 'https://esm.sh/stripe@14.10.0?target=deno' // Updated Stripe version, removed explicit deno-std
 
 console.log('Stripe webhook handler function initialized')
 
