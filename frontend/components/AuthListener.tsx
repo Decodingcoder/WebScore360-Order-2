@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 // This component handles listening to Supabase auth changes client-side
-// and performs redirects based on the session status.
+// primarily for SIGNED_OUT events.
 export default function AuthListener() {
   const router = useRouter()
   const supabase = createClient()
@@ -14,23 +14,20 @@ export default function AuthListener() {
     console.log('AuthListener - Setting up listener')
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event /*, _session */) => {
         console.log(`AuthListener - Event: ${event}`)
-        if (event === 'SIGNED_IN' && session) {
-          console.log('AuthListener - User signed in event detected.')
-          // REMOVED: Redirect to dashboard. Middleware handles this.
-          // router.push('/dashboard')
-        } else if (event === 'SIGNED_OUT') {
+        // Removed SIGNED_IN handler - Middleware should handle redirecting logged-in users from /login
+        // and protecting /dashboard.
+        if (event === 'SIGNED_OUT') {
           console.log('AuthListener - User signed out, redirecting to login')
-          // Ensure redirect doesn't happen if already on login/public pages
-          // TODO: Add more robust path checking if needed
+          // TODO: Add more robust path checking if needed to avoid unnecessary redirects
           if (window.location.pathname !== '/login') {
             router.push('/login')
           }
         } else if (event === 'INITIAL_SESSION') {
           console.log('AuthListener - Initial session processed.')
-          // Optional: Could redirect here if initial session exists and not on protected route,
-          // but middleware might handle this better server-side.
+          // We could potentially check if session exists and user is on '/' and redirect to '/dashboard'
+          // but let's rely on middleware + user navigation for now.
         }
       }
     )

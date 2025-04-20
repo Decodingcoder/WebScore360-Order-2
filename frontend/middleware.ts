@@ -84,7 +84,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    // If user is already logged in and tries to access login, redirect to dashboard
+    // Keep this: If user is already logged in and tries to access login, redirect to dashboard
     if (session && request.nextUrl.pathname === '/login') {
       console.log(
         'Middleware - Redirecting to dashboard (already authenticated)'

@@ -61,13 +61,9 @@ export default function AuthCallbackHandler() {
         // Clear the hash
         window.location.hash = ''
 
-        // Force a server refresh to ensure middleware picks up the new session
-        console.log('Auth Callback Handler - Refreshing router...')
-        router.refresh()
-
-        // Now redirect to dashboard (middleware should allow this after refresh)
-        console.log('Auth Callback Handler - Redirecting to dashboard...')
-        router.push('/dashboard')
+        // Redirect directly to homepage after setting session client-side
+        console.log('Auth Callback Handler - Redirecting to homepage...')
+        router.push('/')
       } catch (err) {
         console.error('Auth Callback Handler - Error processing session:', err)
         const errorMessage =
@@ -78,7 +74,7 @@ export default function AuthCallbackHandler() {
           router.push(`/login?message=${encodeURIComponent(errorMessage)}`)
         }, 3000)
       } finally {
-        // Set processing to false only if there was an error, otherwise refresh/redirect handles UI change
+        // Set processing to false only if there was an error
         if (error) {
           setIsProcessing(false)
         }
