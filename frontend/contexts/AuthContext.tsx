@@ -47,7 +47,6 @@ const AuthContext = createContext<AuthContextType>(defaultAuthContext)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [hasInitializedAuth, setHasInitializedAuth] = useState(false)
   const supabase = useSupabase()
 
@@ -74,49 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true
 
-    // Add session detection to the window focus event for better refresh handling
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible') {
-        try {
-          const {
-            data: { session: currentSession },
-          } = await supabase.auth.getSession()
-          if (mounted && currentSession) {
-            console.log('Visibility changed, updating session')
-            setSession(currentSession)
-            setUser(currentSession.user)
-          } else if (mounted) {
-            // No current session, try to refresh it
-            refreshSession()
-          }
-        } catch (error) {
-          console.error('Error refreshing session on visibility change:', error)
-        }
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    const handleStorage = async (event: StorageEvent) => {
-      // Listen for changes to auth-related localStorage items
-      if (event.key?.includes('auth')) {
-        console.log('Auth storage changed, refreshing session')
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-        if (mounted && session) {
-          setSession(session)
-          setUser(session.user)
-        }
-      }
-    }
-
-    window.addEventListener('storage', handleStorage)
-
     const initializeAuth = async () => {
       try {
         console.log('Initializing auth')
-        setIsLoading(true)
 
         // Try to get current session
         const {
@@ -134,13 +93,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await refreshSession()
           }
           setHasInitializedAuth(true)
-          setIsLoading(false)
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
         if (mounted) {
           setHasInitializedAuth(true)
-          setIsLoading(false)
         }
       }
     }
@@ -149,8 +106,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('storage', handleStorage)
     }
   }, [supabase, refreshSession])
 
@@ -181,22 +136,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      setIsLoading(true)
       await supabase.auth.signOut()
       // Explicitly clear the state after sign out
       setSession(null)
       setUser(null)
     } catch (error) {
       console.error('Error signing out:', error)
-    } finally {
-      setIsLoading(false)
     }
   }, [supabase])
 
   const signInWithEmail = useCallback(
     async (email: string, password: string) => {
       try {
-        setIsLoading(true)
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -210,8 +161,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               ? error
               : new Error('Unknown error during sign in'),
         }
-      } finally {
-        setIsLoading(false)
       }
     },
     [supabase]
@@ -220,7 +169,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUpWithEmail = useCallback(
     async (email: string, password: string) => {
       try {
-        setIsLoading(true)
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -237,8 +185,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               ? error
               : new Error('Unknown error during sign up'),
         }
-      } finally {
-        setIsLoading(false)
       }
     },
     [supabase]
@@ -247,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = {
     user,
     session,
-    isLoading: isLoading || !hasInitializedAuth,
+    isLoading: !hasInitializedAuth,
     signOut,
     signInWithEmail,
     signUpWithEmail,

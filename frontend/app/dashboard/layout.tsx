@@ -4,7 +4,7 @@ import Header from '@/components/dashboard/Header'
 import Sidebar from '@/components/dashboard/Sidebar'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 // Force dynamic rendering for authenticated layouts
 export const dynamic = 'force-dynamic'
@@ -16,50 +16,23 @@ export default function DashboardLayout({
 }>) {
   const { isLoading, session, user } = useAuth()
   const router = useRouter()
-  const [authChecked, setAuthChecked] = useState(false)
-  const [hasLocalAuth, setHasLocalAuth] = useState(false)
 
-  // Check for auth tokens in localStorage - this is a safety check
+  // Redirect logic simplified: runs when loading is complete
   useEffect(() => {
-    // Only run in browser
-    if (typeof window !== 'undefined') {
-      // Check if auth data exists in localStorage - any of these keys would indicate a logged-in state
-      const hasToken =
-        localStorage.getItem('sb-auth-token') ||
-        localStorage.getItem('supabase.auth.token') ||
-        localStorage.getItem('sb-refresh-token')
-      setHasLocalAuth(!!hasToken)
-      console.log('Auth token found in localStorage:', !!hasToken)
-    }
-  }, [])
-
-  // Wait for authentication state to stabilize before redirecting
-  useEffect(() => {
-    // Only consider auth check complete after loading has finished
+    // Wait until the AuthContext has finished its initial check
     if (!isLoading) {
-      // Use a longer delay to ensure auth state is stable
-      const timer = setTimeout(() => {
-        setAuthChecked(true)
-
-        // If we have session or user, we're authenticated
-        const isAuthenticated = !!session || !!user
-
-        // Only redirect if:
-        // 1. No session AND no user from AuthContext
-        // 2. No auth tokens in localStorage (failsafe)
-        // 3. Loading has completed
-        if (!isAuthenticated && !hasLocalAuth) {
-          console.log('No auth detected, redirecting to login')
-          router.push('/login')
-        }
-      }, 1500) // Longer delay to ensure auth state is stable
-
-      return () => clearTimeout(timer)
+      // If loading is done AND we still don't have a session or user, redirect
+      if (!session && !user) {
+        console.log(
+          'Auth check complete, no session/user found, redirecting to login'
+        )
+        router.push('/login')
+      }
     }
-  }, [isLoading, session, user, router, hasLocalAuth])
+  }, [isLoading, session, user, router]) // Depend only on the authoritative state
 
-  // Show loading state while authentication is being checked
-  if (isLoading || !authChecked) {
+  // Show loading state while authentication is being checked from AuthContext
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="flex items-center space-x-2">
@@ -89,9 +62,10 @@ export default function DashboardLayout({
     )
   }
 
-  // Even if auth context isn't ready but we found local auth, show the dashboard
-  // This prevents flashing/redirects when refreshing
-  if (!session && !user && !hasLocalAuth) {
+  // If loading is done but we still don't have a user/session,
+  // the useEffect above will trigger a redirect. Render null briefly
+  // to avoid flashing the layout before redirect.
+  if (!session && !user) {
     return null
   }
 
