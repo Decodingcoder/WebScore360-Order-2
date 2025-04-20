@@ -51,8 +51,6 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <script src="https://accounts.google.com/gsi/client" async></script>
-      {/* <OneTapComponent /> */}
       <Header />
       <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center pt-28">
         <div className="w-full max-w-md">
