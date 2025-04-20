@@ -128,7 +128,7 @@ export default function AuthForm() {
             data-type="standard"
             data-shape="rectangular"
             data-theme="outline"
-            data-text="signin_with"
+            data-text="continue_with"
             data-size="large"
             data-logo_alignment="left"
             data-width="400"
