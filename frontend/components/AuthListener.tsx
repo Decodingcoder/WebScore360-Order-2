@@ -17,10 +17,9 @@ export default function AuthListener() {
       (event, session) => {
         console.log(`AuthListener - Event: ${event}`)
         if (event === 'SIGNED_IN' && session) {
-          console.log('AuthListener - User signed in, redirecting to dashboard')
-          // TODO: Potentially check current path to avoid redirect loops if already on dashboard?
-          // TODO: Handle 'next' parameter if needed for specific redirects post-login
-          router.push('/dashboard')
+          console.log('AuthListener - User signed in event detected.')
+          // REMOVED: Redirect to dashboard. Middleware handles this.
+          // router.push('/dashboard')
         } else if (event === 'SIGNED_OUT') {
           console.log('AuthListener - User signed out, redirecting to login')
           // Ensure redirect doesn't happen if already on login/public pages
