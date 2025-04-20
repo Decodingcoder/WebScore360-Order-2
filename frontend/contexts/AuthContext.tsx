@@ -5,6 +5,7 @@ import { Session, User } from '@supabase/supabase-js'
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -38,28 +39,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
 
   useEffect(() => {
-    const getSession = async () => {
+    const initializeAuth = async () => {
       try {
+        setIsLoading(true)
         const {
           data: { session },
         } = await supabase.auth.getSession()
-        setSession(session)
-        setUser(session?.user ?? null)
+        if (session) {
+          setSession(session)
+          setUser(session.user)
+        }
       } catch (error) {
-        console.error('Error getting session:', error)
+        console.error('Error initializing auth:', error)
       } finally {
         setIsLoading(false)
       }
     }
 
-    getSession()
+    initializeAuth()
+  }, [supabase])
 
+  useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setIsLoading(false)
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setSession(session)
+        setUser(session?.user ?? null)
+      } else if (event === 'SIGNED_OUT') {
+        setSession(null)
+        setUser(null)
+      }
     })
 
     return () => {
@@ -67,52 +77,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [supabase])
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
+      setIsLoading(true)
       await supabase.auth.signOut()
     } catch (error) {
       console.error('Error signing out:', error)
+    } finally {
+      setIsLoading(false)
     }
-  }
+  }, [supabase])
 
-  const signInWithEmail = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      return { error }
-    } catch (error) {
-      console.error('Error signing in with email:', error)
-      return {
-        error:
-          error instanceof Error
-            ? error
-            : new Error('Unknown error during sign in'),
+  const signInWithEmail = useCallback(
+    async (email: string, password: string) => {
+      try {
+        setIsLoading(true)
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        return { error }
+      } catch (error) {
+        console.error('Error signing in with email:', error)
+        return {
+          error:
+            error instanceof Error
+              ? error
+              : new Error('Unknown error during sign in'),
+        }
+      } finally {
+        setIsLoading(false)
       }
-    }
-  }
+    },
+    [supabase]
+  )
 
-  const signUpWithEmail = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-      return { error }
-    } catch (error) {
-      console.error('Error signing up with email:', error)
-      return {
-        error:
-          error instanceof Error
-            ? error
-            : new Error('Unknown error during sign up'),
+  const signUpWithEmail = useCallback(
+    async (email: string, password: string) => {
+      try {
+        setIsLoading(true)
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        })
+        return { error }
+      } catch (error) {
+        console.error('Error signing up with email:', error)
+        return {
+          error:
+            error instanceof Error
+              ? error
+              : new Error('Unknown error during sign up'),
+        }
+      } finally {
+        setIsLoading(false)
       }
-    }
-  }
+    },
+    [supabase]
+  )
 
   const value = {
     user,

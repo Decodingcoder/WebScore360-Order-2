@@ -2,58 +2,24 @@
 
 import Header from '@/components/dashboard/Header'
 import Sidebar from '@/components/dashboard/Sidebar'
-/* Commented for bypass */
-// import { createClient } from '@/utils/supabase/client'
-// import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const [isLoading, setIsLoading] = useState(true)
-  /* Commented for bypass */
-  // const router = useRouter()
-  // const supabase = createClient()
+  const { isLoading, session } = useAuth()
+  const router = useRouter()
 
+  // If not authenticated after auth check completes, redirect to login
   useEffect(() => {
-    /* Commented for bypass
-    const checkAuth = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session) {
-        router.push('/login')
-        return
-      }
-
-      setIsLoading(false)
+    if (!isLoading && !session) {
+      router.push('/login')
     }
-
-    checkAuth()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        router.push('/login')
-      }
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-    */
-
-    // BYPASS: Simulate loading for a brief moment
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 800)
-
-    return () => clearTimeout(timer)
-  }, [])
+  }, [isLoading, session, router])
 
   if (isLoading) {
     return (
@@ -83,6 +49,11 @@ export default function DashboardLayout({
         </div>
       </div>
     )
+  }
+
+  // Return null if not authenticated to prevent flash of dashboard before redirect
+  if (!session) {
+    return null
   }
 
   return (
