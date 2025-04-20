@@ -36,54 +36,50 @@ const OneTapComponent = () => {
     }
   }
 
+  // Keep this useEffect to attach the callback to window
   useEffect(() => {
     window.handleSignInWithGoogle = handleSignInWithGoogle
     return () => {
       delete window.handleSignInWithGoogle
     }
-    // We need a way to pass handleSignInWithGoogle to useEffect below,
-    // but function definitions inside useEffect are tricky with dependencies.
-    // Attaching to window works for the data-callback, but not ideal.
-    // Let's keep it for now but acknowledge it's not perfect.
-  }, [router]) // Added router dependency
+  }, [router])
 
-  useEffect(() => {
-    // Check if the Google library is loaded
-    const googleScriptLoaded =
-      typeof window.google?.accounts?.id !== 'undefined'
-    const buttonContainer = document.getElementById('google-signin-button')
-
-    if (googleScriptLoaded && buttonContainer) {
-      // Check both script and element
-      window.google.accounts.id.renderButton(
-        buttonContainer, // Pass the confirmed element
-        {
-          theme: 'outline',
-          size: 'large',
-          type: 'standard',
-          shape: 'rectangular',
-          text: 'continue_with',
-          logo_alignment: 'left',
-          width: 400, // Changed to number
-        } // Configuration options
-      )
-    } else {
-      if (!googleScriptLoaded) {
-        console.log('Google script not loaded yet for button rendering.')
-      }
-      if (!buttonContainer) {
-        console.log('Google signin button element not found.')
-      }
-      // Consider adding a listener or timeout/retry if needed
+  // Function to render the button - will be called by Script onReady
+  const renderGoogleButton = () => {
+    if (typeof window.google?.accounts?.id === 'undefined') {
+      console.error('Google script not loaded yet, cannot render button.')
+      return // Exit if google object isn't ready
     }
-  }, []) // Empty dependency array ensures this runs once after mount
+
+    const buttonContainer = document.getElementById('google-signin-button')
+    if (buttonContainer) {
+      window.google.accounts.id.renderButton(buttonContainer, {
+        theme: 'outline',
+        size: 'large',
+        type: 'standard',
+        shape: 'rectangular',
+        text: 'continue_with',
+        logo_alignment: 'left',
+        width: 400,
+      })
+      // Optionally call prompt here if needed
+      // window.google.accounts.id.prompt();
+    } else {
+      console.error('Google signin button element not found.')
+    }
+  }
 
   return (
     <>
-      {/* Load the GSI client library */}
-      <Script src="https://accounts.google.com/gsi/client" async defer />
+      {/* Load the GSI client library and call renderGoogleButton when ready */}
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        async
+        defer
+        onReady={renderGoogleButton} // Call render function when script is ready
+      />
 
-      {/* One Tap prompt configuration - Keep this as is */}
+      {/* One Tap prompt configuration */}
       <div
         id="g_id_onload"
         data-client_id="845104135306-8k7qjt5d95nqtbu034ql1f2g0ih167n0.apps.googleusercontent.com"
@@ -93,9 +89,8 @@ const OneTapComponent = () => {
         data-auto_prompt="false"
       ></div>
 
-      {/* Container for the Google Sign-In button - Rendered via JS */}
+      {/* Container for the Google Sign-In button */}
       <div id="google-signin-button"></div>
-      {/* Removed the old data-* attributes driven button div */}
     </>
   )
 }
