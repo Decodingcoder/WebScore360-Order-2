@@ -2,77 +2,14 @@
 
 import AuthForm from '@/components/AuthForm'
 import { Footer } from '@/components/Footer'
+import { Header } from '@/components/layout/Header'
 import LoginErrorMessage from '@/components/LoginErrorMessage'
-import { Button } from '@/components/ui/button'
-import { createClient } from '@/utils/supabase/client' // Import client
-import type { Session } from '@supabase/supabase-js' // Import Session type
-import Image from 'next/image'
-import Link from 'next/link'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense } from 'react'
 
 export default function LoginPage() {
-  const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
-  const supabase = createClient() // Create client instance
-
-  // Handle client-side only rendering for auth check
-  useEffect(() => {
-    setMounted(true)
-
-    const getSessionData = async () => {
-      setIsLoading(true)
-      const {
-        data: { session: fetchedSession },
-      } = await supabase.auth.getSession()
-      setSession(fetchedSession)
-      setIsLoading(false)
-    }
-    getSessionData()
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => {
-      subscription?.unsubscribe()
-    }
-  }, [supabase])
-
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="fixed top-0 left-0 right-0 backdrop-blur-sm bg-white/70 dark:bg-gray-900/70 z-50 py-4 px-4 border-b border-gray-200 dark:border-gray-800">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Link href="/">
-              <Image
-                src="/logo.png"
-                alt="WebScore360 Logo"
-                width={80}
-                height={32}
-                className="h-8 w-auto"
-              />
-            </Link>
-          </div>
-          <nav className="flex gap-3">
-            {/* Show loading or based on session */}
-            {!mounted || isLoading ? (
-              <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" /> // Placeholder
-            ) : session ? (
-              <Button size="sm" asChild>
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-            ) : (
-              <Button size="sm" asChild>
-                <Link href="#pricing">Pricing</Link>
-              </Button>
-            )}
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center pt-28">
         <div className="w-full max-w-md">

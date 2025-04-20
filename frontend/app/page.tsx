@@ -2,82 +2,18 @@
 
 import { Footer } from '@/components/Footer'
 import HomeForm from '@/components/HomeForm'
+import { Header } from '@/components/layout/Header'
 import { GridPattern } from '@/components/magicui/grid-pattern'
 import { ShineBorder } from '@/components/magicui/shine-border'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { createClient } from '@/utils/supabase/client'
-import type { Session } from '@supabase/supabase-js'
-import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
 
 export default function Home() {
-  const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
-  const supabase = createClient()
-
-  // Handle client-side only rendering for auth check
-  useEffect(() => {
-    setMounted(true)
-
-    const getSessionData = async () => {
-      setIsLoading(true)
-      const {
-        data: { session: fetchedSession },
-      } = await supabase.auth.getSession()
-      setSession(fetchedSession)
-      setIsLoading(false)
-    }
-    getSessionData()
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => {
-      subscription?.unsubscribe()
-    }
-  }, [supabase])
-
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="fixed top-0 left-0 right-0 backdrop-blur-sm bg-white/70 dark:bg-gray-900/70 z-50 py-4 px-4 border-b border-gray-200 dark:border-gray-800">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Link href="/">
-              <Image
-                src="/logo.png"
-                alt="WebScore360 Logo"
-                width={80}
-                height={32}
-                className="h-8 w-auto"
-              />
-            </Link>
-          </div>
-          <nav className="flex gap-3">
-            {!mounted || isLoading ? (
-              <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
-            ) : session ? (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-            )}
-            <Button size="sm" asChild>
-              <Link href="#pricing">Pricing</Link>
-            </Button>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       <main className="flex-1 pt-28 relative">
         <div className="absolute inset-0 w-full h-screen overflow-hidden pointer-events-none -z-10">
