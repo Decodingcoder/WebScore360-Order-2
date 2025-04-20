@@ -13,8 +13,12 @@ export default function GoogleLoginButton() {
       setIsLoading(true)
       setError(null)
 
+      console.log('GoogleLoginButton - Starting sign in process')
+
       const supabase = createClient()
 
+      // Use signInWithOAuth with different settings to ensure
+      // we get a proper session establishment
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -23,12 +27,15 @@ export default function GoogleLoginButton() {
             access_type: 'offline',
             prompt: 'consent',
           },
+          // Use implicit flow to ensure tokens come back in URL hash
+          // This helps when the cookie storage is problematic
+          flowType: 'implicit',
         },
       })
 
       if (error) throw error
     } catch (err) {
-      console.error('Error during sign in:', err)
+      console.error('GoogleLoginButton - Error during sign in:', err)
       setError(
         err instanceof Error ? err.message : 'Failed to sign in with Google'
       )
