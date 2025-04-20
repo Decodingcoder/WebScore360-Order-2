@@ -1,10 +1,28 @@
-import { createClient } from '@/utils/supabase/server'
-
+import { createClient as createServiceRoleClient } from '@supabase/supabase-js' // Use the standard JS client for service role
 import { NextResponse } from 'next/server'
 
+// NOTE: Ensure these environment variables are set in your deployment!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
 export async function POST(request: Request) {
+  // Validate environment variables
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    console.error('Missing Supabase environment variables')
+    return NextResponse.json(
+      { error: 'Server configuration error.' },
+      { status: 500 }
+    )
+  }
+
   // Create a client with the SERVICE ROLE KEY
-  const supabase = await createClient()
+  const supabase = createServiceRoleClient(
+    supabaseUrl,
+    supabaseServiceRoleKey,
+    {
+      auth: { persistSession: false }, // No need to persist session for service role
+    }
+  )
 
   try {
     const { websiteUrl, email } = await request.json()
