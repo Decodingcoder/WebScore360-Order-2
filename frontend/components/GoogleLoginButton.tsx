@@ -21,12 +21,10 @@ export default function GoogleLoginButton() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-          // The flowType property is not supported in this version
-          // We'll rely on the default flow
+          // queryParams: { // Temporarily removed for debugging
+          //   access_type: 'offline',
+          //   prompt: 'consent',
+          // },
         },
       })
 
