@@ -1,3 +1,4 @@
+import AuthListener from '@/components/AuthListener'
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
 import './globals.css'
@@ -34,6 +35,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100`}
       >
+        <AuthListener />
         <Providers>{children}</Providers>
       </body>
     </html>

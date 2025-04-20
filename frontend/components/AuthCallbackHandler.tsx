@@ -9,8 +9,8 @@ export default function AuthCallbackHandler() {
   const [isProcessing, setIsProcessing] = useState(true)
   const router = useRouter()
   const searchParams = useSearchParams()
-  // Check for 'next' query param if needed for post-auth redirect
-  const nextPath = searchParams.get('next') || '/dashboard'
+  // Check for 'next' query param if needed for post-auth redirect - REMOVED as redirect handled elsewhere
+  // const nextPath = searchParams.get('next') || '/dashboard'
 
   useEffect(() => {
     const processHashParams = async () => {
@@ -58,10 +58,13 @@ export default function AuthCallbackHandler() {
 
         console.log('Auth Callback Handler - Session established successfully.')
 
-        // Redirect to the intended destination
-        // Clear the hash before redirecting
+        // Redirect to the intended destination - REMOVED, will be handled by auth state listener
+        // Clear the hash but stay on the page briefly
         window.location.hash = ''
-        router.push(nextPath)
+        // router.push(nextPath) // REMOVED
+
+        // Indicate processing is done, listener will handle redirect
+        setIsProcessing(false)
       } catch (err) {
         console.error('Auth Callback Handler - Error processing session:', err)
         const errorMessage =
@@ -72,9 +75,9 @@ export default function AuthCallbackHandler() {
           router.push(`/login?message=${encodeURIComponent(errorMessage)}`)
         }, 3000)
       } finally {
-        // Only set processing to false if there was an error and we are showing it
-        // Otherwise, the redirect handles the state change.
-        if (error) {
+        // Set processing to false if there was an error or on successful completion (before listener redirects)
+        if (error || !isProcessing) {
+          // Check !isProcessing for the success case
           setIsProcessing(false)
         }
       }
