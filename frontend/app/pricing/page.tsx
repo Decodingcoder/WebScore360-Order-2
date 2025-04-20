@@ -307,7 +307,7 @@ export default function PricingPage() {
                 className="w-full mt-8 bg-blue-600 hover:bg-blue-700"
                 asChild
               >
-                <Link href="/login">Get Started</Link>
+                <Link href="/login">Get Started Free</Link>
               </Button>
             </div>
           </div>
@@ -427,7 +427,7 @@ export default function PricingPage() {
                 className="w-full mt-8 bg-purple-600 hover:bg-purple-700"
                 asChild
               >
-                <Link href="/login">Get Started</Link>
+                <Link href="/login">Get Started Free</Link>
               </Button>
             </div>
           </div>
