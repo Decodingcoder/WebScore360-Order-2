@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@/utils/supabase/client'
-import { CredentialResponse } from 'google-one-tap'
+import google, { CredentialResponse } from 'google-one-tap'
 import { useRouter } from 'next/navigation'
 import Script from 'next/script'
 import { useEffect } from 'react'
@@ -13,7 +13,9 @@ const OneTapComponent = () => {
   // generate nonce to use for google id token sign-in
   const generateNonce = async (): Promise<string[]> => {
     const nonce = btoa(
-      String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))
+      String.fromCharCode(
+        ...Array.from(crypto.getRandomValues(new Uint8Array(32)))
+      )
     )
     const encoder = new TextEncoder()
     const encodedNonce = encoder.encode(nonce)
@@ -45,7 +47,7 @@ const OneTapComponent = () => {
 
         /* global google */
         google.accounts.id.initialize({
-          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
           callback: async (response: CredentialResponse) => {
             try {
               // send id token returned in response.credential to supabase
