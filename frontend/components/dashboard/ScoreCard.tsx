@@ -21,15 +21,15 @@ export default function ScoreCard({
   }
 
   return (
-    <Card className="flex flex-col items-center text-center">
-      <CardContent className="pt-6">
+    <Card className="flex flex-col items-center text-center h-full">
+      <CardContent className="pt-6 flex flex-col flex-grow">
         <div
-          className={`h-12 w-12 rounded-full flex items-center justify-center text-white font-bold ${getColorClass()}`}
+          className={`h-12 w-12 rounded-full flex items-center justify-center text-white font-bold ${getColorClass()} shrink-0 mx-auto`}
         >
           {Math.round(score)}
         </div>
         <h3 className="text-lg font-medium mt-2 mb-1">{title}</h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-auto">
           {description}
         </p>
       </CardContent>

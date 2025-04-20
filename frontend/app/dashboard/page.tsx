@@ -1,13 +1,22 @@
 'use client'
 
 import AnalyzeForm from '@/components/dashboard/AnalyzeForm'
-import AuditsList from '@/components/dashboard/AuditsList'
 import ScoreCard from '@/components/dashboard/ScoreCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import UpgradeModal from '@/components/UpgradeModal'
 import { createClient } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import { FileDown } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -39,6 +48,8 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<'Pro' | 'Business+'>('Pro')
+  const [recentAudits, setRecentAudits] = useState<Audit[]>([])
+  const [totalAudits, setTotalAudits] = useState<number>(0)
   const supabase = createClient()
   const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
@@ -72,17 +83,53 @@ export default function Dashboard() {
           setAuditsRemaining(profile.audits_remaining)
         }
 
-        // Get latest audit
-        const { data: audits } = await supabase
-          .from('audits')
-          .select('*')
-          .eq('user_id', fetchedUser.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
+        // --- Fetch Audit Data Concurrently ---
+        const auditPromises = [
+          // Get latest audit (limit 1)
+          supabase
+            .from('audits')
+            .select('*')
+            .eq('user_id', fetchedUser.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single(), // Use single to get object or null
 
-        if (audits && audits.length > 0) {
-          setLatestAudit(audits[0] as Audit)
-        }
+          // Get recent 3 audits (limit 3)
+          supabase
+            .from('audits')
+            .select('*') // Select columns needed for the table
+            .eq('user_id', fetchedUser.id)
+            .order('created_at', { ascending: false })
+            .limit(3),
+
+          // Get total audit count
+          supabase
+            .from('audits')
+            .select('count', { count: 'exact', head: true })
+            .eq('user_id', fetchedUser.id),
+        ]
+
+        const [latestAuditResult, recentAuditsResult, totalAuditsResult] =
+          await Promise.all(auditPromises)
+
+        // Process results
+        if (latestAuditResult.error)
+          console.error('Error fetching latest audit:', latestAuditResult.error)
+        else setLatestAudit(latestAuditResult.data as Audit | null)
+
+        if (recentAuditsResult.error)
+          console.error(
+            'Error fetching recent audits:',
+            recentAuditsResult.error
+          )
+        else setRecentAudits((recentAuditsResult.data as Audit[]) || [])
+
+        if (totalAuditsResult.error)
+          console.error(
+            'Error fetching total audits count:',
+            totalAuditsResult.error
+          )
+        else setTotalAudits(totalAuditsResult.count ?? 0)
       } catch (error) {
         console.error('Error fetching user data:', error)
       } finally {
@@ -98,6 +145,31 @@ export default function Dashboard() {
     if (score >= 80) return 'bg-green-500'
     if (score >= 50) return 'bg-yellow-500'
     return 'bg-red-500'
+  }
+
+  // Function to format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat('en-US', {
+      // year: 'numeric', // Omit year for brevity
+      month: 'numeric',
+      day: 'numeric',
+      // hour: '2-digit',
+      // minute: '2-digit',
+    }).format(date)
+  }
+
+  // Function to render score with color
+  const renderScore = (score: number | null) => {
+    if (score === null || score === undefined) {
+      return <span className="text-gray-400">-</span>
+    }
+    let color = 'text-gray-600 dark:text-gray-400'
+    if (score >= 80) color = 'text-green-600 dark:text-green-400'
+    else if (score >= 50) color = 'text-yellow-600 dark:text-yellow-400'
+    else if (score >= 0) color = 'text-red-600 dark:text-red-400'
+
+    return <span className={`font-semibold ${color}`}>{Math.round(score)}</span>
   }
 
   // Open upgrade modal with specific plan
@@ -274,8 +346,73 @@ export default function Dashboard() {
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Recent Audits</h2>
         <Card>
-          <CardContent className="p-4">
-            <AuditsList />
+          <CardContent className="p-0">
+            {recentAudits.length > 0 ? (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Website</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-center">Score</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentAudits.map((audit) => (
+                      <TableRow key={audit.id}>
+                        <TableCell className="font-medium max-w-xs truncate">
+                          {audit.website_url}
+                        </TableCell>
+                        <TableCell>{formatDate(audit.created_at)}</TableCell>
+                        <TableCell className="text-center">
+                          {renderScore(audit.overall_score)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/dashboard/audits/${audit.id}`}>
+                              View Details
+                            </Link>
+                          </Button>
+                          {audit.report_pdf_url && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              asChild
+                              title="Download Report"
+                            >
+                              <a
+                                href={audit.report_pdf_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download
+                              >
+                                <FileDown className="h-4 w-4 ml-1" />
+                              </a>
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <div className="text-sm text-gray-500 dark:text-gray-400 px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+                  Showing {recentAudits.length} of {totalAudits} audits.{' '}
+                  {totalAudits > recentAudits.length && (
+                    <Link
+                      href="/dashboard/audits"
+                      className="text-blue-600 hover:underline"
+                    >
+                      View All
+                    </Link>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <p>You haven&apos;t analyzed any websites yet.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
