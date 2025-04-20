@@ -67,11 +67,6 @@ export async function processWebsiteAnalysis(job: Job<AnalysisJob>) {
     // Step 6: Update audit status to completed
     await updateAuditStatus(auditId, 'completed')
 
-    // Step 7: If user is logged in, update their remaining audits count
-    if (userId) {
-      await updateUserAuditsRemaining(userId)
-    }
-
     logger.info(`Analysis for ${websiteUrl} completed successfully`)
     return { success: true, auditId }
   } catch (error) {
@@ -151,48 +146,5 @@ async function updateAuditWithPdfUrl(auditId: string, pdfUrl: string) {
     }
   } catch (error) {
     logger.error('Error updating audit with PDF URL', { error })
-  }
-}
-
-/**
- * Update user's remaining audits count
- */
-async function updateUserAuditsRemaining(userId: string) {
-  try {
-    // First get the user's profile
-    const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('audits_remaining')
-      .eq('user_id', userId)
-      .single()
-
-    if (fetchError) {
-      logger.error(`Failed to fetch user profile: ${fetchError.message}`)
-      return
-    }
-
-    // If audits_remaining is null or undefined, don't update
-    if (
-      profile.audits_remaining === null ||
-      profile.audits_remaining === undefined
-    ) {
-      return
-    }
-
-    // Update the audits_remaining count
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({
-        audits_remaining: Math.max(0, profile.audits_remaining - 1),
-      })
-      .eq('user_id', userId)
-
-    if (updateError) {
-      logger.error(
-        `Failed to update user audits remaining: ${updateError.message}`
-      )
-    }
-  } catch (error) {
-    logger.error('Error updating user audits remaining', { error })
   }
 }
