@@ -36,49 +36,38 @@ export async function processWebsiteAnalysis(job: Job<AnalysisJob>) {
     let subscriptionTier: 'free' | 'pro' = 'free' // Default to free
     try {
       if (userEmail) {
-        // First find user by email (assuming email is unique in auth.users)
-        const { data: userData, error: userError } = await supabase
-          .from('users') // Assuming Supabase default auth table
-          .select('id')
-          .eq('email', userEmail)
-          .single()
+        // --- Query profiles table directly using email --- START
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles') // Query profiles table
+          .select('subscription_tier') // Select the tier column
+          .eq('email', userEmail) // Filter by the email column
+          .maybeSingle() // Use maybeSingle in case no profile exists for the email yet
 
-        if (userError && userError.code !== 'PGRST116') {
-          // PGRST116 = 0 rows found, which is okay
-          logger.warn(`Error fetching user ID for email ${userEmail}`, {
-            userError,
-          })
-        } else if (userData) {
-          // Now find profile by user_id
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('subscription_tier')
-            .eq('user_id', userData.id) // Link profile to user via user_id
-            .single()
-
-          if (profileError && profileError.code !== 'PGRST116') {
-            logger.warn(`Error fetching profile for user ${userData.id}`, {
+        if (profileError) {
+          // Log error but don't stop processing, default to free
+          logger.warn(
+            `Error fetching profile directly for email ${userEmail}`,
+            {
               profileError,
-            })
-          } else if (profileData && profileData.subscription_tier) {
-            const tier = profileData.subscription_tier.toLowerCase()
-            if (tier === 'pro' || tier === 'business_plus') {
-              // Treat business_plus as pro for PDF generation for now
-              subscriptionTier = 'pro'
             }
-            logger.info(
-              `Found subscription tier '${profileData.subscription_tier}' for user ${userEmail}`
-            )
-          } else {
-            logger.info(
-              `No profile or tier found for user ${userEmail}, defaulting to free.`
-            )
+          )
+        } else if (profileData && profileData.subscription_tier) {
+          // Profile found, check the tier
+          const tier = profileData.subscription_tier.toLowerCase()
+          if (tier === 'pro' || tier === 'business_plus') {
+            // Treat business_plus as pro for PDF generation for now
+            subscriptionTier = 'pro'
           }
-        } else {
           logger.info(
-            `No user found for email ${userEmail}, defaulting to free.`
+            `Found subscription tier '${profileData.subscription_tier}' for user ${userEmail} via direct profile lookup.`
+          )
+        } else {
+          // No profile found for this email, or tier is null/empty
+          logger.info(
+            `No profile/tier found directly for email ${userEmail}, defaulting to free.`
           )
         }
+        // --- Query profiles table directly using email --- END
       } else {
         logger.warn(
           `No userEmail provided for audit ${auditId}, defaulting to free tier.`
