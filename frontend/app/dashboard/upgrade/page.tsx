@@ -343,9 +343,6 @@ function UpgradePageContent() {
                   <ul className="list-disc list-inside space-y-1 text-sm">
                     <li>All Pro features included</li>
                     <li>Unlimited audits per month</li>
-                    {/* Placeholder features from specs */}
-                    <li>Priority Support (Placeholder)</li>
-                    <li>Competitor Benchmarks (Placeholder)</li>
                   </ul>
                   <div className="space-y-2">
                     {/* Monthly Business+ */}

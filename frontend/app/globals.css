@@ -76,3 +76,18 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Google Sign-In Button Responsive Styles */
+#google-signin-button {
+  width: 100%; /* Make the container full width */
+  display: flex; /* Help manage the button inside */
+  justify-content: center; /* Center Google's button if it doesn't stretch */
+}
+
+/* Attempt to make the button itself full width */
+/* Google might render a div or an iframe, try targeting both */
+#google-signin-button > div,
+#google-signin-button iframe {
+   width: 100% !important; /* Force full width, necessary due to Google's inline styles */
+   margin: 0 auto; /* Center if it still has constraints */
+}

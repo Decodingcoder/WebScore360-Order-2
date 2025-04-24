@@ -60,7 +60,6 @@ const OneTapComponent = () => {
         shape: 'rectangular',
         text: 'continue_with',
         logo_alignment: 'left',
-        width: 400,
       })
       // Optionally call prompt here if needed
       // window.google.accounts.id.prompt();

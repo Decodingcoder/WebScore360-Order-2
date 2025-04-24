@@ -2,15 +2,20 @@
 
 import { login, signup } from '@/app/login/actions'
 import OneTapComponent from '@/components/auth/OneTapComponent'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
 type AuthMode = 'signin' | 'signup' | 'verification'
 
 export default function AuthForm() {
+  const searchParams = useSearchParams()
+  const source = searchParams.get('source')
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState<AuthMode>('signin')
@@ -77,6 +82,18 @@ export default function AuthForm() {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Conditionally display report info */}
+        {source === 'report_request' && (
+          <Alert className="mb-4">
+            <AlertTitle>Report Processing</AlertTitle>
+            <AlertDescription>
+              Your website analysis report is being generated. Please sign in or
+              create an account to view it in your dashboard once it&apos;s
+              ready.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Google One Tap Component */}
         <OneTapComponent />
 
