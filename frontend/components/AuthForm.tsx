@@ -114,7 +114,7 @@ export default function AuthForm() {
           onSubmit={handleSubmit}
           className="space-y-4 flex flex-col items-center"
         >
-          <div className="space-y-2 w-[280px]">
+          <div className="space-y-2 w-[300px]">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -126,7 +126,7 @@ export default function AuthForm() {
               className="w-full"
             />
           </div>
-          <div className="space-y-2 w-[280px]">
+          <div className="space-y-2 w-[300px]">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -140,12 +140,12 @@ export default function AuthForm() {
           </div>
 
           {error && (
-            <div className="p-3 text-sm rounded-md bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 w-[280px]">
+            <div className="p-3 text-sm rounded-md bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 w-[300px]">
               {error}
             </div>
           )}
 
-          <Button type="submit" className="w-[280px]" disabled={isLoading}>
+          <Button type="submit" className="w-[300px]" disabled={isLoading}>
             {isLoading
               ? 'Loading...'
               : mode === 'signin'

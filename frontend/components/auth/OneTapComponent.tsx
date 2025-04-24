@@ -90,7 +90,7 @@ const OneTapComponent = () => {
       ></div>
 
       {/* Container for the Google Sign-In button */}
-      <div id="google-signin-button" className="w-[280px] mx-auto"></div>
+      <div id="google-signin-button" className="w-[300px] mx-auto"></div>
     </>
   )
 }
