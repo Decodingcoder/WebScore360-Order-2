@@ -110,8 +110,11 @@ export default function AuthForm() {
         </div>
 
         {/* Email/Password Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 flex flex-col items-center"
+        >
+          <div className="space-y-2 w-[280px]">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -120,9 +123,10 @@ export default function AuthForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="w-full"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 w-[280px]">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -131,16 +135,17 @@ export default function AuthForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              className="w-full"
             />
           </div>
 
           {error && (
-            <div className="p-3 text-sm rounded-md bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+            <div className="p-3 text-sm rounded-md bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 w-[280px]">
               {error}
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-[280px]" disabled={isLoading}>
             {isLoading
               ? 'Loading...'
               : mode === 'signin'
