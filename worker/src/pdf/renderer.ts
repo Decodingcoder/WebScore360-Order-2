@@ -12,11 +12,14 @@ let guidance: Record<string, { what: string; why: string; how: string }> = {}
 try {
   const guidanceJson = fs.readFileSync(guidancePath, 'utf-8')
   guidance = JSON.parse(guidanceJson)
+  // Add a log to check the loaded guidance keys
+  logger.info(`Loaded guidance keys: ${Object.keys(guidance).join(', ')}`)
 } catch (e) {
   logger.error(`Failed to load fix-it-guidance.json from ${guidancePath}`, {
     error: e,
   })
-  // Handle error appropriately - perhaps throw or continue with empty guidance
+  // Also log if loading failed, so we know guidance is empty
+  logger.warn('Guidance object is empty due to loading error.')
 }
 
 /**
