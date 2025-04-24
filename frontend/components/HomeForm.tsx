@@ -75,7 +75,7 @@ export default function HomeForm() {
 
       // After showing success message, redirect to login
       setTimeout(() => {
-        router.push('/login')
+        router.push('/login?source=report_request')
       }, 2500) // Keep the delay as per current behaviour
     } catch (err) {
       setError(
