@@ -20,7 +20,11 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <AuthForm />
+          <Suspense
+            fallback={<div className="text-center p-4">Loading form...</div>}
+          >
+            <AuthForm />
+          </Suspense>
 
           <Suspense fallback={null}>
             <div className="mt-4">
