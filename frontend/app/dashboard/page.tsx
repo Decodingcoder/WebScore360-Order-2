@@ -1,6 +1,7 @@
 'use client'
 
 import AnalyzeForm from '@/components/dashboard/AnalyzeForm'
+import AuditStatusPoller from '@/components/dashboard/AuditStatusPoller'
 import ScoreCard from '@/components/dashboard/ScoreCard'
 import { Button } from '@/components/ui/button'
 import {
@@ -31,7 +32,7 @@ import type { User } from '@supabase/supabase-js'
 import { FileDown, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 // Force dynamic rendering for this authenticated page
 export const dynamic = 'force-dynamic'
@@ -42,6 +43,7 @@ interface Audit {
   requested_email: string
   website_url: string
   created_at: string
+  status: 'pending' | 'processing' | 'completed' | 'failed' | null
   overall_score: number | null
   performance_score: number | null
   seo_score: number | null
@@ -50,6 +52,12 @@ interface Audit {
   presence_score: number | null
   report_pdf_url: string | null
   raw_data: Record<string, unknown>
+}
+
+interface PolledAuditData {
+  status: string | null
+  overall_score: number | null
+  report_pdf_url: string | null
 }
 
 export default function Dashboard() {
@@ -104,21 +112,39 @@ export default function Dashboard() {
           setAuditsRemaining(profile.audits_remaining)
         }
 
+        // Define columns to select (including status)
+        const auditSelectColumns = `
+          id,
+          user_id,
+          requested_email,
+          website_url,
+          created_at,
+          status, 
+          overall_score,
+          performance_score,
+          seo_score,
+          conversion_score,
+          branding_score,
+          presence_score,
+          report_pdf_url,
+          raw_data
+        `
+
         // --- Fetch Audit Data Concurrently ---
         const auditPromises = [
           // Get latest audit (limit 1)
           supabase
             .from('audits')
-            .select('*')
+            .select(auditSelectColumns) // Use defined columns
             .eq('user_id', fetchedUser.id)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single(), // Use single to get object or null
+            .maybeSingle(), // Use maybeSingle for latest
 
           // Get recent 3 audits (limit 3)
           supabase
             .from('audits')
-            .select('*') // Select columns needed for the table
+            .select(auditSelectColumns) // Use defined columns
             .eq('user_id', fetchedUser.id)
             .order('created_at', { ascending: false })
             .limit(3),
@@ -161,6 +187,44 @@ export default function Dashboard() {
     fetchUserData()
   }, [supabase, router])
 
+  // --- State Update Handlers for Poller --- START
+  const handleLatestAuditUpdate = useCallback(
+    (updatedData: PolledAuditData) => {
+      setLatestAudit((prevAudit) => {
+        if (!prevAudit) return null // Should not happen if poller is running
+        // Create a new object with updated fields
+        return {
+          ...prevAudit,
+          status: updatedData.status as Audit['status'], // Cast status
+          overall_score: updatedData.overall_score,
+          report_pdf_url: updatedData.report_pdf_url,
+        }
+      })
+    },
+    []
+  )
+
+  const handleRecentAuditUpdate = useCallback(
+    (auditId: string, updatedData: PolledAuditData) => {
+      setRecentAudits((prevAudits) =>
+        prevAudits.map((audit) => {
+          if (audit.id === auditId) {
+            // Create a new object for the updated audit
+            return {
+              ...audit,
+              status: updatedData.status as Audit['status'], // Cast status
+              overall_score: updatedData.overall_score,
+              report_pdf_url: updatedData.report_pdf_url,
+            }
+          }
+          return audit // Return unchanged audit
+        })
+      )
+    },
+    []
+  )
+  // --- State Update Handlers for Poller --- END
+
   // Helper function to render traffic light color based on score
   const getScoreColor = (score: number | null) => {
     // Handle null case
@@ -181,6 +245,27 @@ export default function Dashboard() {
       month: 'numeric',
       day: 'numeric',
     }).format(date)
+  }
+
+  // Function to render score with color OR processing indicator
+  const renderScoreOrStatus = (audit: Audit) => {
+    if (audit.status === 'completed' && audit.overall_score !== null) {
+      return renderScore(audit.overall_score) // Existing score rendering
+    } else if (audit.status === 'processing' || audit.status === 'pending') {
+      return (
+        <span className="flex items-center justify-center text-xs text-blue-600 dark:text-blue-400">
+          <Loader2 className="animate-spin h-3 w-3 mr-1" />
+          Processing...
+        </span>
+      )
+    } else if (audit.status === 'failed') {
+      return (
+        <span className="text-xs text-red-600 dark:text-red-400">Failed</span>
+      )
+    } else {
+      // Fallback if status is unexpected or score is null for completed
+      return <span className="text-gray-400">-</span>
+    }
   }
 
   // Function to render score with color
@@ -262,7 +347,7 @@ export default function Dashboard() {
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Latest Audit Results</h2>
         {(() => {
-          // Handle loading state first (handled globally, but good practice here too)
+          // Handle loading state first (handled globally)
           if (isLoading) {
             return (
               <Card>
@@ -285,9 +370,13 @@ export default function Dashboard() {
             )
           }
 
-          // Handle processing state (scores are null)
-          // TODO: Add check for a specific 'failed' status if available
-          if (latestAudit.overall_score === null) {
+          // Define whether the latest audit is ongoing
+          const isLatestAuditOngoing =
+            latestAudit.status === 'pending' ||
+            latestAudit.status === 'processing'
+
+          // Handle processing state
+          if (isLatestAuditOngoing) {
             return (
               <Card>
                 <CardHeader>
@@ -305,104 +394,119 @@ export default function Dashboard() {
                   <p className="text-muted-foreground break-all">
                     {latestAudit.website_url}
                   </p>
+                  {/* Add the poller component here */}
+                  <AuditStatusPoller
+                    auditId={latestAudit.id}
+                    initialStatus={latestAudit.status}
+                    onUpdate={handleLatestAuditUpdate}
+                  />
                 </CardContent>
               </Card>
             )
           }
 
-          // *** Placeholder for Failed State ***
-          // if (latestAudit.status === 'failed') { // Or however failure is determined
-          //   return (
-          //     <Card>
-          //       <CardHeader className="flex flex-row items-center space-x-3 bg-destructive/10">
-          //         <AlertTriangle className="w-6 h-6 text-destructive" />
-          //         <div className="flex flex-col">
-          //            <CardTitle className="text-destructive">Analysis Failed</CardTitle>
-          //             <CardDescription>For: {latestAudit.website_url}</CardDescription>
-          //          </div>
-          //        </CardHeader>
-          //       <CardContent className="p-4 text-center text-destructive">
-          //         Something went wrong during the analysis. Please try again or contact support.
-          //       </CardContent>
-          //     </Card>
-          //   )
-          // }
+          // Handle Failed State
+          if (latestAudit.status === 'failed') {
+            return (
+              <Card>
+                {/* Simple failure message, can be enhanced */}
+                <CardHeader className="bg-destructive/10">
+                  <CardTitle className="text-destructive">
+                    Analysis Failed
+                  </CardTitle>
+                  <CardDescription>
+                    For: {latestAudit.website_url}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 text-center text-destructive">
+                  Something went wrong during the analysis. Please try again or
+                  contact support.
+                </CardContent>
+              </Card>
+            )
+          }
 
           // Handle completed state (render score cards)
-          return (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start gap-4 mb-6">
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold ${getScoreColor(
-                        latestAudit.overall_score // Pass potentially null score
-                      )} shrink-0`}
-                    >
-                      {/* Render score, check for null just in case */}
-                      {latestAudit.overall_score !== null
-                        ? Math.round(latestAudit.overall_score)
-                        : '-'}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold break-all">
-                        {latestAudit.website_url}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Analyzed on{' '}
-                        {new Date(latestAudit.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  {latestAudit.report_pdf_url && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      asChild
-                      className="mt-1"
-                    >
-                      <a
-                        href={latestAudit.report_pdf_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download
+          if (latestAudit.status === 'completed') {
+            return (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start gap-4 mb-6">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold ${getScoreColor(
+                          latestAudit.overall_score
+                        )} shrink-0`}
                       >
-                        Download Report
-                      </a>
-                    </Button>
-                  )}
-                </div>
+                        {latestAudit.overall_score !== null
+                          ? Math.round(latestAudit.overall_score)
+                          : '-'}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold break-all">
+                          {latestAudit.website_url}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          Analyzed on{' '}
+                          {new Date(
+                            latestAudit.created_at
+                          ).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    {latestAudit.report_pdf_url && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="mt-1"
+                      >
+                        <a
+                          href={latestAudit.report_pdf_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                        >
+                          Download Report
+                        </a>
+                      </Button>
+                    )}
+                  </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
-                  <ScoreCard
-                    title="Performance"
-                    score={latestAudit.performance_score}
-                    description="Page speed and technical aspects"
-                  />
-                  <ScoreCard
-                    title="SEO"
-                    score={latestAudit.seo_score}
-                    description="Search engine optimization"
-                  />
-                  <ScoreCard
-                    title="Conversion"
-                    score={latestAudit.conversion_score}
-                    description="Lead generation potential"
-                  />
-                  <ScoreCard
-                    title="Branding"
-                    score={latestAudit.branding_score}
-                    description="Brand presentation and identity"
-                  />
-                  <ScoreCard
-                    title="Presence"
-                    score={latestAudit.presence_score}
-                    description="Online presence and social media"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
+                    <ScoreCard
+                      title="Performance"
+                      score={latestAudit.performance_score}
+                      description="Page speed and technical aspects"
+                    />
+                    <ScoreCard
+                      title="SEO"
+                      score={latestAudit.seo_score}
+                      description="Search engine optimization"
+                    />
+                    <ScoreCard
+                      title="Conversion"
+                      score={latestAudit.conversion_score}
+                      description="Lead generation potential"
+                    />
+                    <ScoreCard
+                      title="Branding"
+                      score={latestAudit.branding_score}
+                      description="Brand presentation and identity"
+                    />
+                    <ScoreCard
+                      title="Presence"
+                      score={latestAudit.presence_score}
+                      description="Online presence and social media"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          }
+
+          // Fallback if status is unexpected
+          return null
         })()}
       </div>
 
@@ -431,41 +535,58 @@ export default function Dashboard() {
                     <TableRow>
                       <TableHead>Website</TableHead>
                       <TableHead>Date</TableHead>
-                      <TableHead className="text-center">Score</TableHead>
+                      <TableHead className="text-center">
+                        Status / Score
+                      </TableHead>
                       <TableHead className="text-right">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentAudits.map((audit) => (
-                      <TableRow key={audit.id}>
-                        <TableCell className="font-medium max-w-xs truncate">
-                          {audit.website_url}
-                        </TableCell>
-                        <TableCell>{formatDate(audit.created_at)}</TableCell>
-                        <TableCell className="text-center">
-                          {renderScore(audit.overall_score)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {audit.report_pdf_url && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              asChild
-                              title="Download Report"
-                            >
-                              <a
-                                href={audit.report_pdf_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                download
-                              >
-                                <FileDown className="h-4 w-4 ml-1" />
-                              </a>
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {recentAudits.map((audit) => {
+                      const isAuditOngoing =
+                        audit.status === 'pending' ||
+                        audit.status === 'processing'
+                      return (
+                        <TableRow key={audit.id}>
+                          <TableCell className="font-medium max-w-xs truncate">
+                            {audit.website_url}
+                          </TableCell>
+                          <TableCell>{formatDate(audit.created_at)}</TableCell>
+                          <TableCell className="text-center">
+                            {renderScoreOrStatus(audit)}
+                            {isAuditOngoing && (
+                              <AuditStatusPoller
+                                auditId={audit.id}
+                                initialStatus={audit.status}
+                                onUpdate={(updatedData) =>
+                                  handleRecentAuditUpdate(audit.id, updatedData)
+                                }
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {audit.status === 'completed' &&
+                              audit.report_pdf_url && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  asChild
+                                  title="Download Report"
+                                >
+                                  <a
+                                    href={audit.report_pdf_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download
+                                  >
+                                    <FileDown className="h-4 w-4 ml-1" />
+                                  </a>
+                                </Button>
+                              )}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
                   </TableBody>
                 </Table>
                 <div className="text-sm text-gray-500 dark:text-gray-400 px-2 py-3">
@@ -498,8 +619,7 @@ export default function Dashboard() {
           <DialogHeader>
             <DialogTitle>Upgrade Successful!</DialogTitle>
             <DialogDescription>
-              Your plan has been successfully upgraded. You now have access to
-              your new features.
+              Your plan has been upgraded successfully. Enjoy your new features!
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
