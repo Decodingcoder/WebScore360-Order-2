@@ -4,23 +4,9 @@ import { PDFDocument, rgb, StandardFonts, PDFFont } from 'pdf-lib'
 import { AnalysisResult } from '../analysis/analyzer'
 import { logger } from '../utils/logger'
 
-// Import Fix-It Guidance
-// Ensure the path is correct relative to the compiled JS file in 'dist'
-// You might need to adjust this path based on your build process or copy the JSON to 'dist'
-const guidancePath = path.resolve(__dirname, '../lib/fix-it-guidance.json')
-let guidance: Record<string, { what: string; why: string; how: string }> = {}
-try {
-  const guidanceJson = fs.readFileSync(guidancePath, 'utf-8')
-  guidance = JSON.parse(guidanceJson)
-  // Add a log to check the loaded guidance keys
-  logger.info(`Loaded guidance keys: ${Object.keys(guidance).join(', ')}`)
-} catch (e) {
-  logger.error(`Failed to load fix-it-guidance.json from ${guidancePath}`, {
-    error: e,
-  })
-  // Also log if loading failed, so we know guidance is empty
-  logger.warn('Guidance object is empty due to loading error.')
-}
+// --- Directly import the guidance data from the TS file --- START
+import { guidance } from '../lib/fix-it-guidance' // Import from .ts file
+// --- Directly import the guidance data from the TS file --- END
 
 /**
  * Render PDF from data directly
