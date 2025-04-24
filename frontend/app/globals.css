@@ -77,19 +77,4 @@ body {
   }
 }
 
-/* Google Sign-In Button Responsive Styles */
-#google-signin-button {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-/* Target the container and the iframe more forcefully */
-/* Google might render intermediate divs, target them too */
-#google-signin-button > div,
-#google-signin-button iframe {
-   width: 100% !important; /* Force full width */
-   max-width: 100% !important; /* Prevent overflow */
-   margin: 0 auto !important; /* Ensure centering */
-   min-width: 150px; /* Optional: Prevent it becoming too small */
-}
+/* Remove conflicting Google Sign-in styles */
