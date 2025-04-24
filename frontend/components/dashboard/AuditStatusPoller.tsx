@@ -15,6 +15,11 @@ interface AuditStatusPollerProps {
     status: string | null
     overall_score: number | null
     report_pdf_url: string | null
+    performance_score: number | null
+    seo_score: number | null
+    conversion_score: number | null
+    branding_score: number | null
+    presence_score: number | null
   }) => void
   pollInterval?: number // Optional interval in ms (defaults to 5000)
 }

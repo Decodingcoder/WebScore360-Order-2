@@ -58,6 +58,11 @@ interface PolledAuditData {
   status: string | null
   overall_score: number | null
   report_pdf_url: string | null
+  performance_score: number | null
+  seo_score: number | null
+  conversion_score: number | null
+  branding_score: number | null
+  presence_score: number | null
 }
 
 export default function Dashboard() {
@@ -192,12 +197,17 @@ export default function Dashboard() {
     (updatedData: PolledAuditData) => {
       setLatestAudit((prevAudit) => {
         if (!prevAudit) return null // Should not happen if poller is running
-        // Create a new object with updated fields
+        // Create a new object with updated fields, including category scores
         return {
           ...prevAudit,
           status: updatedData.status as Audit['status'], // Cast status
           overall_score: updatedData.overall_score,
           report_pdf_url: updatedData.report_pdf_url,
+          performance_score: updatedData.performance_score,
+          seo_score: updatedData.seo_score,
+          conversion_score: updatedData.conversion_score,
+          branding_score: updatedData.branding_score,
+          presence_score: updatedData.presence_score,
         }
       })
     },
@@ -209,12 +219,17 @@ export default function Dashboard() {
       setRecentAudits((prevAudits) =>
         prevAudits.map((audit) => {
           if (audit.id === auditId) {
-            // Create a new object for the updated audit
+            // Create a new object for the updated audit, including category scores
             return {
               ...audit,
               status: updatedData.status as Audit['status'], // Cast status
               overall_score: updatedData.overall_score,
               report_pdf_url: updatedData.report_pdf_url,
+              performance_score: updatedData.performance_score,
+              seo_score: updatedData.seo_score,
+              conversion_score: updatedData.conversion_score,
+              branding_score: updatedData.branding_score,
+              presence_score: updatedData.presence_score,
             }
           }
           return audit // Return unchanged audit

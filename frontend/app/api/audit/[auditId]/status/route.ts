@@ -53,7 +53,12 @@ export async function GET(
         overall_score,
         report_pdf_url,
         user_id,
-        requested_email
+        requested_email,
+        performance_score,
+        seo_score,
+        conversion_score,
+        branding_score,
+        presence_score
       `
       )
       .eq('id', auditId)
@@ -90,6 +95,11 @@ export async function GET(
       status: auditData.status,
       overall_score: auditData.overall_score,
       report_pdf_url: auditData.report_pdf_url,
+      performance_score: auditData.performance_score,
+      seo_score: auditData.seo_score,
+      conversion_score: auditData.conversion_score,
+      branding_score: auditData.branding_score,
+      presence_score: auditData.presence_score,
     })
   } catch (error) {
     logger.error('Unexpected error in audit status route', { auditId, error })
