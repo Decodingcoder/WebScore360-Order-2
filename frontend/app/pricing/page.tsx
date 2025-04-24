@@ -313,9 +313,9 @@ export default function PricingPage() {
           </div>
 
           {/* Business+ Plan */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg opacity-70">
             <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/40 dark:to-pink-900/40">
-              <h3 className="text-2xl font-bold">Business+</h3>
+              <h3 className="text-2xl font-bold">Business+ (Coming Soon)</h3>
               <div className="flex items-baseline mt-2">
                 <span className="text-5xl font-extrabold">
                   {billingInterval === 'year' ? '$342' : '$38'}
@@ -424,10 +424,10 @@ export default function PricingPage() {
               </ul>
               <Button
                 variant="default"
-                className="w-full mt-8 bg-purple-600 hover:bg-purple-700"
-                asChild
+                className="w-full mt-8 bg-purple-600 hover:bg-purple-700 cursor-not-allowed"
+                disabled
               >
-                <Link href="/login">Get Started Free</Link>
+                Coming Soon
               </Button>
             </div>
           </div>

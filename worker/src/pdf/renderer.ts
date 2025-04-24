@@ -1,19 +1,36 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import * as Handlebars from 'handlebars'
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import { PDFDocument, rgb, StandardFonts, PDFFont } from 'pdf-lib'
 import { AnalysisResult } from '../analysis/analyzer'
 import { logger } from '../utils/logger'
+
+// Import Fix-It Guidance
+// Ensure the path is correct relative to the compiled JS file in 'dist'
+// You might need to adjust this path based on your build process or copy the JSON to 'dist'
+const guidancePath = path.resolve(__dirname, '../lib/fix-it-guidance.json')
+let guidance: Record<string, { what: string; why: string; how: string }> = {}
+try {
+  const guidanceJson = fs.readFileSync(guidancePath, 'utf-8')
+  guidance = JSON.parse(guidanceJson)
+} catch (e) {
+  logger.error(`Failed to load fix-it-guidance.json from ${guidancePath}`, {
+    error: e,
+  })
+  // Handle error appropriately - perhaps throw or continue with empty guidance
+}
 
 /**
  * Render PDF from data directly
  */
 export async function renderPdfFromTemplate(
   websiteUrl: string,
-  analysisResult: AnalysisResult
+  analysisResult: AnalysisResult,
+  subscriptionTier: 'free' | 'pro' // Add subscription tier
 ): Promise<Buffer> {
   try {
-    logger.info(`Generating PDF report for ${websiteUrl} using pdf-lib`)
+    logger.info(
+      `Generating PDF report for ${websiteUrl} (Tier: ${subscriptionTier}) using pdf-lib`
+    )
 
     // Create a new PDF document
     const pdfDoc = await PDFDocument.create()
@@ -35,12 +52,13 @@ export async function renderPdfFromTemplate(
     }
 
     // Add a page
-    const page = pdfDoc.addPage([595.28, 841.89]) // A4 size
+    let page = pdfDoc.addPage([595.28, 841.89]) // A4 size
     const { width, height } = page.getSize()
 
     // Set initial position
     let y = height - 50
     const margin = 50
+    const contentWidth = width - margin * 2
 
     // Add logo if available
     if (logoImage) {
@@ -73,7 +91,7 @@ export async function renderPdfFromTemplate(
       font: helveticaFont,
     })
 
-    y -= 30
+    y -= 20 // Adjust spacing
 
     // Add generation date
     const generatedDate = new Date().toLocaleDateString('en-US', {
@@ -90,7 +108,21 @@ export async function renderPdfFromTemplate(
       font: helveticaFont,
     })
 
-    y -= 50
+    y -= 15 // Adjust spacing before plan identifier
+
+    // Add Plan Identifier
+    const planText = `Generated on ${
+      subscriptionTier === 'pro' ? 'Pro' : 'Free'
+    } Plan`
+    page.drawText(planText, {
+      x: margin,
+      y,
+      size: 10,
+      font: helveticaFont,
+      color: rgb(0.4, 0.4, 0.4),
+    })
+
+    y -= 40 // Adjust spacing after plan identifier
 
     // Add overall score
     page.drawText(`Overall Score: ${analysisResult.overallScore}`, {
@@ -152,8 +184,12 @@ export async function renderPdfFromTemplate(
     }
 
     // Split interpretation text into lines to fit the page width
-    const maxWidth = width - margin * 2
-    const lines = splitTextToLines(interpretation, helveticaFont, 12, maxWidth)
+    const interpretationLines = splitTextToLines(
+      interpretation,
+      helveticaFont,
+      12,
+      contentWidth
+    )
 
     page.drawText('Summary:', {
       x: margin,
@@ -165,7 +201,11 @@ export async function renderPdfFromTemplate(
     y -= 25
 
     // Draw each line of the interpretation
-    for (const line of lines) {
+    for (const line of interpretationLines) {
+      if (y < margin + 18) {
+        page = pdfDoc.addPage([width, height])
+        y = height - margin - 30
+      }
       page.drawText(line, {
         x: margin,
         y,
@@ -175,52 +215,159 @@ export async function renderPdfFromTemplate(
       y -= 18
     }
 
-    y -= 30
+    y -= 30 // Space after summary
 
-    // Add recommendations
-    const recommendations = generateRecommendationsList(analysisResult)
+    // --- Add Upgrade CTA for Free Tier --- START
+    if (subscriptionTier === 'free') {
+      const upgradeText1 = 'Unlock detailed insights and step-by-step fixes!'
+      const upgradeText2 = 'Upgrade to Pro: https://webscore360.io/dashboard'
 
-    page.drawText('Key Recommendations:', {
-      x: margin,
-      y,
-      size: 14,
-      font: helveticaBold,
-    })
+      // Check for page break before CTA
+      if (y < margin + 50) {
+        // Estimate space needed for CTA
+        page = pdfDoc.addPage([width, height])
+        y = height - margin - 30 // Reset y position
+        // Optionally redraw header/logo on new page if needed
+      }
 
-    y -= 25
-
-    // Draw each recommendation
-    for (let i = 0; i < recommendations.length; i++) {
-      const rec = recommendations[i]
-
-      page.drawText(`${i + 1}. ${rec.title} (${rec.category})`, {
+      page.drawText(upgradeText1, {
         x: margin,
         y,
         size: 12,
         font: helveticaBold,
+        color: rgb(0.1, 0.5, 0.1), // Greenish color
       })
-
       y -= 20
+      page.drawText(upgradeText2, {
+        x: margin,
+        y,
+        size: 11,
+        font: helveticaFont,
+        color: rgb(0.2, 0.4, 0.6), // Blueish link color
+      })
+      y -= 30 // Space after CTA
+    }
+    // --- Add Upgrade CTA for Free Tier --- END
 
-      // Split recommendation description into lines
-      const descLines = splitTextToLines(
-        rec.description,
-        helveticaFont,
-        12,
-        maxWidth - 20
-      )
-
-      for (const line of descLines) {
-        page.drawText(line, {
-          x: margin + 20,
-          y,
-          size: 12,
-          font: helveticaFont,
-        })
-        y -= 18
+    // --- Add Detailed Findings Section (Pro Only) --- START
+    if (subscriptionTier === 'pro') {
+      // Check for page break before starting section
+      if (y < margin + 50) {
+        page = pdfDoc.addPage([width, height])
+        y = height - margin - 30
       }
 
-      y -= 15
+      page.drawText('Detailed Findings & Fix-It Guidance', {
+        x: margin,
+        y,
+        size: 16,
+        font: helveticaBold,
+      })
+      y -= 30
+
+      const failedChecks = Object.entries(analysisResult.rawData.checks).filter(
+        ([_key, check]) => !check.passed
+      )
+
+      if (failedChecks.length === 0) {
+        if (y < margin + 20) {
+          // Check space
+          page = pdfDoc.addPage([width, height])
+          y = height - margin - 30
+        }
+        page.drawText(
+          'Excellent! No specific issues requiring guidance were found in this analysis.',
+          {
+            x: margin,
+            y,
+            size: 12,
+            font: helveticaFont,
+          }
+        )
+        y -= 20
+      } else {
+        for (const [key, check] of failedChecks) {
+          const guidanceItem = guidance[key]
+          if (!guidanceItem) {
+            logger.warn(`No fix-it guidance found for failed check key: ${key}`)
+            continue // Skip if no guidance defined
+          }
+
+          // Estimate space needed for this item (can be refined)
+          const neededSpace =
+            60 + // Title + Spacing
+            guidanceItem.what.length / 5 + // Rough estimate for lines
+            guidanceItem.why.length / 5 +
+            guidanceItem.how.length / 5
+
+          // Add page break if needed before starting item
+          if (y < margin + neededSpace) {
+            page = pdfDoc.addPage([width, height])
+            y = height - margin - 30 // Reset y position
+          }
+
+          // Draw Check Title (human-readable from key)
+          const checkTitle = key
+            .replace(/^[^_]+_/, '') // Remove category prefix (e.g., "seo_")
+            .replace(/_/g, ' ')
+            .replace(/(?:^|\s)\S/g, (a) => a.toUpperCase())
+            .trim()
+
+          page.drawText(checkTitle, {
+            x: margin,
+            y,
+            size: 13,
+            font: helveticaBold,
+            color: getScoreRgb(check.score), // Use score color for title
+          })
+          y -= 25
+
+          // Helper to draw wrapped text section
+          const drawSection = (label: string, text: string) => {
+            const fullText = `${label}: ${text}`
+            const lines = splitTextToLines(
+              fullText,
+              helveticaFont,
+              11,
+              contentWidth - 15
+            )
+            if (y < margin + lines.length * 16) {
+              // Check space for lines
+              page = pdfDoc.addPage([width, height])
+              y = height - margin - 30
+            }
+            for (const line of lines) {
+              page.drawText(line, {
+                x: margin + 15,
+                y,
+                size: 11,
+                font: helveticaFont,
+              })
+              y -= 16 // Line spacing
+              if (y < margin) {
+                // Check during loop
+                page = pdfDoc.addPage([width, height])
+                y = height - margin - 30
+              }
+            }
+            y -= 8 // Space after section
+          }
+
+          // Draw What, Why, How sections
+          drawSection('What it is', guidanceItem.what)
+          drawSection('Why it matters', guidanceItem.why)
+          drawSection('How to fix it', guidanceItem.how)
+
+          y -= 15 // Extra space after the whole item
+        } // End loop through failed checks
+      }
+    } // End if (subscriptionTier === 'pro')
+    // --- Add Detailed Findings Section (Pro Only) --- END
+
+    // Ensure y is not too low before drawing footer
+    if (y < margin + 30) {
+      page = pdfDoc.addPage([width, height])
+      y = height - margin - 30 // Leave space at top
     }
 
     // Update footer to include the website URL
@@ -255,143 +402,43 @@ export async function renderPdfFromTemplate(
 }
 
 /**
- * Helper function to get RGB color based on score
+ * Get RGB color based on score
  */
 function getScoreRgb(score: number) {
-  if (score >= 80) return rgb(0.2, 0.8, 0.2) // Green
-  if (score >= 50) return rgb(0.9, 0.7, 0) // Yellow
-  return rgb(0.9, 0.2, 0) // Red
+  if (score >= 80) {
+    return rgb(0.2, 0.6, 0.2) // Green
+  } else if (score >= 50) {
+    return rgb(0.8, 0.6, 0.1) // Yellow/Orange
+  } else {
+    return rgb(0.8, 0.2, 0.2) // Red
+  }
 }
 
 /**
- * Helper function to split text into lines that fit within maxWidth
+ * Split text into lines to fit within a max width
  */
 function splitTextToLines(
   text: string,
-  font: any,
+  font: PDFFont, // Use specific PDFFont type
   fontSize: number,
   maxWidth: number
 ): string[] {
-  const words = text.split(' ')
   const lines: string[] = []
+  const words = text.split(' ')
   let currentLine = ''
 
   for (const word of words) {
     const testLine = currentLine ? `${currentLine} ${word}` : word
-    const width = font.widthOfTextAtSize(testLine, fontSize)
+    const testWidth = font.widthOfTextAtSize(testLine, fontSize)
 
-    if (width <= maxWidth) {
+    if (testWidth <= maxWidth) {
       currentLine = testLine
     } else {
       lines.push(currentLine)
       currentLine = word
     }
   }
-
-  if (currentLine) {
-    lines.push(currentLine)
-  }
+  lines.push(currentLine)
 
   return lines
-}
-
-/**
- * Generate recommendations based on scores
- */
-function generateRecommendationsList(result: AnalysisResult): Array<{
-  title: string
-  description: string
-  category: string
-}> {
-  const recommendations = []
-  const { performance, seo, conversion, branding, presence } =
-    result.categoryScores
-
-  // Add recommendations based on lowest scores first
-  const categories = [
-    { name: 'Performance', score: performance },
-    { name: 'SEO', score: seo },
-    { name: 'Conversion', score: conversion },
-    { name: 'Branding', score: branding },
-    { name: 'Online Presence', score: presence },
-  ]
-
-  // Sort by score ascending (lowest first)
-  categories.sort((a, b) => a.score - b.score)
-
-  // Add recommendations for the 3 lowest scoring categories
-  for (let i = 0; i < Math.min(3, categories.length); i++) {
-    const category = categories[i]
-
-    if (category.name === 'Performance' && category.score < 70) {
-      recommendations.push({
-        title: 'Improve Page Load Speed',
-        description:
-          'Your website takes too long to load. Optimize images, enable compression, and leverage browser caching to improve loading times.',
-        category: 'Performance',
-      })
-    }
-
-    if (category.name === 'SEO' && category.score < 70) {
-      recommendations.push({
-        title: 'Enhance SEO Fundamentals',
-        description:
-          'Your website lacks proper SEO structure. Optimize meta tags, improve heading structure, and add descriptive alt text to images.',
-        category: 'SEO',
-      })
-    }
-
-    if (category.name === 'Conversion' && category.score < 70) {
-      recommendations.push({
-        title: 'Improve Call-to-Action Elements',
-        description:
-          'Your CTAs need improvement. Make them more visible, use action-oriented text, and optimize their placement on key pages.',
-        category: 'Conversion',
-      })
-    }
-
-    if (category.name === 'Branding' && category.score < 70) {
-      recommendations.push({
-        title: 'Strengthen Brand Consistency',
-        description:
-          'Your brand elements lack consistency. Standardize colors, typography, and imagery across your website.',
-        category: 'Branding',
-      })
-    }
-
-    if (category.name === 'Online Presence' && category.score < 70) {
-      recommendations.push({
-        title: 'Expand Social Media Integration',
-        description:
-          'Your social media presence needs improvement. Add social sharing buttons and display social proof more prominently.',
-        category: 'Online Presence',
-      })
-    }
-  }
-
-  // Add general recommendations if we don't have enough
-  if (recommendations.length < 3) {
-    if (!recommendations.some((r) => r.category === 'Performance')) {
-      recommendations.push({
-        title: 'Further Optimize Mobile Experience',
-        description:
-          "While your site performs well, there's room to improve the mobile experience with better touch targets and responsive layouts.",
-        category: 'Performance',
-      })
-    }
-
-    if (
-      !recommendations.some((r) => r.category === 'SEO') &&
-      recommendations.length < 3
-    ) {
-      recommendations.push({
-        title: 'Enhance Content Strategy',
-        description:
-          'Expand your content with more relevant keywords and structured data to improve search visibility.',
-        category: 'SEO',
-      })
-    }
-  }
-
-  return recommendations.slice(0, 3) // Return up to 3 recommendations
 }

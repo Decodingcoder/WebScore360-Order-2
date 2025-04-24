@@ -1,7 +1,8 @@
 import { CheerioAPI } from 'cheerio'
 import { logger } from '../utils/logger'
+import axios from 'axios'
 
-interface SeoResult {
+export interface SeoResult {
   score: number
   checks: {
     titleTag: { passed: boolean; score: number; value: string | null }
@@ -20,7 +21,10 @@ interface SeoResult {
  * - Image Alt Text: >= 80% of images have alt text
  * - Sitemap: /sitemap.xml exists
  */
-export function analyzeSeo($: CheerioAPI, url: string): SeoResult {
+export async function analyzeSeo(
+  $: CheerioAPI,
+  url: string
+): Promise<SeoResult> {
   logger.info(`Analyzing SEO for ${url}`)
 
   // Check title tag
@@ -36,7 +40,7 @@ export function analyzeSeo($: CheerioAPI, url: string): SeoResult {
   const imgAltResult = checkImageAltText($)
 
   // Check sitemap
-  const sitemapResult = { passed: false, score: 0, value: false } // This would require a separate HTTP request
+  const sitemapResult = await checkSitemap(url)
 
   // Calculate overall SEO score (average of 5 checks)
   const seoScore = Math.round(
@@ -156,5 +160,42 @@ function checkImageAltText($: CheerioAPI): {
     passed,
     score,
     value: percentage,
+  }
+}
+
+/**
+ * Check if sitemap.xml returns a 200 OK status (HEAD request)
+ */
+async function checkSitemap(
+  baseUrl: string
+): Promise<{ passed: boolean; score: number; value: boolean }> {
+  try {
+    const sitemapUrl = new URL('/sitemap.xml', baseUrl).toString()
+    const response = await axios.head(sitemapUrl, {
+      timeout: 5000, // 5 second timeout
+      validateStatus: function (status) {
+        // Accept any status code, we check specifically for 200
+        return status >= 200 && status < 600
+      },
+    })
+
+    const passed = response.status === 200
+    const score = passed ? 100 : 0
+    logger.info(`Sitemap check for ${sitemapUrl}: Status ${response.status}`)
+    return { passed, score, value: passed }
+  } catch (error: any) {
+    // Log different levels based on expected errors vs unexpected
+    if (axios.isAxiosError(error) && error.response) {
+      // Common case: 404 Not Found etc.
+      logger.warn(
+        `Sitemap check failed for ${baseUrl}/sitemap.xml: Status ${error.response.status}`
+      )
+    } else {
+      // Network error, timeout, etc.
+      logger.error(`Error checking sitemap for ${baseUrl}/sitemap.xml`, {
+        error,
+      })
+    }
+    return { passed: false, score: 0, value: false }
   }
 }

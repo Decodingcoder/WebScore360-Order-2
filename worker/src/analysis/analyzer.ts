@@ -7,6 +7,14 @@ import { analyzeBranding } from './branding'
 import { analyzePresence } from './presence'
 import { logger } from '../utils/logger'
 
+// Assuming interfaces are defined correctly in each module
+// We might need to import specific types if not globally available
+import { PerformanceResult } from './performance'
+import { SeoResult } from './seo'
+import { ConversionResult } from './conversion'
+import { BrandingResult } from './branding'
+import { PresenceResult } from './presence'
+
 export interface AnalysisResult {
   websiteUrl: string
   overallScore: number
@@ -18,13 +26,18 @@ export interface AnalysisResult {
     presence: number
   }
   categoryResults: {
-    performance: any
-    seo: any
-    conversion: any
-    branding: any
-    presence: any
+    performance: PerformanceResult
+    seo: SeoResult
+    conversion: ConversionResult
+    branding: BrandingResult
+    presence: PresenceResult
   }
-  rawData: any
+  rawData: {
+    checks: Record<string, { passed: boolean; score: number; value?: any }>
+    html_snippet: string
+    final_url: string
+    timestamp: string
+  }
 }
 
 /**
@@ -45,7 +58,7 @@ export async function analyzeWebsite(url: string): Promise<AnalysisResult> {
 
     // Analyze each category
     const performanceResults = await analyzePerformance(finalUrl)
-    const seoResults = analyzeSeo($, finalUrl)
+    const seoResults = await analyzeSeo($, finalUrl)
     const conversionResults = analyzeConversion($)
     const brandingResults = analyzeBranding($, finalUrl)
     const presenceResults = analyzePresence($)
@@ -79,8 +92,31 @@ export async function analyzeWebsite(url: string): Promise<AnalysisResult> {
         presence: presenceResults,
       },
       rawData: {
-        html: html.substring(0, 10000), // Store truncated HTML to avoid excessive storage
-        url: finalUrl,
+        // Combine checks from all categories into a flat structure
+        checks: {
+          // Performance Checks
+          performance_page_speed_mobile: performanceResults.checks.pageSpeed,
+          performance_https_security: performanceResults.checks.https,
+          // SEO Checks
+          seo_title_tag: seoResults.checks.titleTag,
+          seo_meta_description: seoResults.checks.metaDescription,
+          seo_h1_heading: seoResults.checks.h1Heading,
+          seo_image_alt_text: seoResults.checks.imgAltText,
+          seo_sitemap: seoResults.checks.sitemap,
+          // Conversion Checks
+          conversion_cta_buttons: conversionResults.checks.ctaButtons,
+          conversion_form_presence: conversionResults.checks.formPresence,
+          conversion_contact_method: conversionResults.checks.contactMethod,
+          // Branding Checks
+          branding_logo_presence: brandingResults.checks.logoPresence,
+          branding_professional_domain:
+            brandingResults.checks.professionalDomain,
+          // Presence Checks
+          presence_social_media_links: presenceResults.checks.socialMediaLinks,
+          presence_google_presence: presenceResults.checks.googlePresence,
+        },
+        html_snippet: html.substring(0, 10000), // Store truncated HTML
+        final_url: finalUrl,
         timestamp: new Date().toISOString(),
       },
     }

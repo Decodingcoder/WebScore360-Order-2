@@ -13,13 +13,20 @@ interface GeneratePdfResult {
  */
 export async function generatePdf(
   websiteUrl: string,
-  analysisResult: AnalysisResult
+  analysisResult: AnalysisResult,
+  subscriptionTier: 'free' | 'pro'
 ): Promise<GeneratePdfResult> {
-  logger.info(`Generating PDF report for ${websiteUrl}`)
+  logger.info(
+    `Generating PDF report for ${websiteUrl} (Tier: ${subscriptionTier})`
+  )
 
   try {
     // Render PDF from HTML template
-    const pdfBuffer = await renderPdfFromTemplate(websiteUrl, analysisResult)
+    const pdfBuffer = await renderPdfFromTemplate(
+      websiteUrl,
+      analysisResult,
+      subscriptionTier
+    )
 
     // Store the PDF in Supabase Storage
     const pdfUrl = await storePdf(pdfBuffer, websiteUrl, analysisResult)

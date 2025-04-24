@@ -1,12 +1,11 @@
 import { CheerioAPI } from 'cheerio'
 import { logger } from '../utils/logger'
 
-interface ConversionResult {
+export interface ConversionResult {
   score: number
   checks: {
     ctaButtons: { passed: boolean; score: number; value: number }
     formPresence: { passed: boolean; score: number; value: boolean }
-    trustElements: { passed: boolean; score: number; value: number }
     contactMethod: { passed: boolean; score: number; value: boolean }
   }
 }
@@ -15,7 +14,6 @@ interface ConversionResult {
  * Analyze conversion readiness of a website
  * - CTA Presence: Look for buttons or links with call-to-action text
  * - Form Presence: Check if forms exist on the page
- * - Trust Elements: Look for testimonials, badges, security icons
  * - Contact Method: Check for contact form, email, or phone number
  */
 export function analyzeConversion($: CheerioAPI): ConversionResult {
@@ -27,19 +25,12 @@ export function analyzeConversion($: CheerioAPI): ConversionResult {
   // Check form presence
   const formResult = checkFormPresence($)
 
-  // Check trust elements
-  const trustResult = checkTrustElements($)
-
   // Check contact methods
   const contactResult = checkContactMethod($)
 
-  // Calculate overall conversion score (equal weight)
+  // Calculate overall conversion score (average of 3 checks)
   const conversionScore = Math.round(
-    (ctaResult.score +
-      formResult.score +
-      trustResult.score +
-      contactResult.score) /
-      4
+    (ctaResult.score + formResult.score + contactResult.score) / 3
   )
 
   return {
@@ -47,7 +38,6 @@ export function analyzeConversion($: CheerioAPI): ConversionResult {
     checks: {
       ctaButtons: ctaResult,
       formPresence: formResult,
-      trustElements: trustResult,
       contactMethod: contactResult,
     },
   }
@@ -140,82 +130,6 @@ function checkFormPresence($: CheerioAPI): {
     passed,
     score,
     value: passed,
-  }
-}
-
-/**
- * Check for trust elements like testimonials, badges, security icons
- */
-function checkTrustElements($: CheerioAPI): {
-  passed: boolean
-  score: number
-  value: number
-} {
-  let trustCount = 0
-
-  // Check for testimonials
-  const testimonialPatterns = [
-    'testimonial',
-    'review',
-    'feedback',
-    'customer',
-    'client',
-    'what people say',
-  ]
-
-  // Look for elements with testimonial class/id
-  $(
-    '[class*="testimonial"], [id*="testimonial"], [class*="review"], [id*="review"]'
-  ).each(() => {
-    trustCount++
-  })
-
-  // Look for testimonial text patterns
-  testimonialPatterns.forEach((pattern) => {
-    $('h1, h2, h3, h4, h5, h6, div, section').each((_, el) => {
-      if ($(el).text().toLowerCase().includes(pattern)) {
-        trustCount++
-      }
-    })
-  })
-
-  // Check for trust badges and security icons
-  const trustBadgePatterns = [
-    'secure',
-    'security',
-    'ssl',
-    'trust',
-    'verified',
-    'guarantee',
-    'satisfaction',
-    'norton',
-    'mcafee',
-    'bbb',
-    'trustpilot',
-  ]
-
-  // Look for trust badge images
-  $('img').each((_, el) => {
-    const alt = $(el).attr('alt')?.toLowerCase() || ''
-    const src = $(el).attr('src')?.toLowerCase() || ''
-
-    if (
-      trustBadgePatterns.some(
-        (pattern) => alt.includes(pattern) || src.includes(pattern)
-      )
-    ) {
-      trustCount++
-    }
-  })
-
-  // Pass if at least one trust element is found
-  const passed = trustCount > 0
-  const score = passed ? 100 : 0
-
-  return {
-    passed,
-    score,
-    value: trustCount,
   }
 }
 

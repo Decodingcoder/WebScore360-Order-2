@@ -2,7 +2,7 @@ import axios from 'axios'
 import https from 'https'
 import { logger } from '../utils/logger'
 
-interface PerformanceResult {
+export interface PerformanceResult {
   score: number
   pageSpeedScore: number
   httpsScore: number

@@ -1,12 +1,11 @@
 import { CheerioAPI } from 'cheerio'
 import { logger } from '../utils/logger'
 
-interface PresenceResult {
+export interface PresenceResult {
   score: number
   checks: {
     socialMediaLinks: { passed: boolean; score: number; value: number }
     googlePresence: { passed: boolean; score: number; value: boolean }
-    contentPresence: { passed: boolean; score: number; value: boolean }
   }
 }
 
@@ -14,7 +13,6 @@ interface PresenceResult {
  * Analyze online presence of a website
  * - Social Media Links: Check for links to social media platforms
  * - Google Business Profile: Look for Google Business links
- * - Content Presence: Check for blog or article sections
  */
 export function analyzePresence($: CheerioAPI): PresenceResult {
   logger.info('Analyzing online presence')
@@ -25,12 +23,9 @@ export function analyzePresence($: CheerioAPI): PresenceResult {
   // Check Google Business Profile
   const googleResult = checkGoogleBusiness($)
 
-  // Check content presence
-  const contentResult = checkContentPresence($)
-
-  // Calculate overall presence score (equal weight)
+  // Calculate overall presence score (average of 2 checks)
   const presenceScore = Math.round(
-    (socialResult.score + googleResult.score + contentResult.score) / 3
+    (socialResult.score + googleResult.score) / 2
   )
 
   return {
@@ -38,7 +33,6 @@ export function analyzePresence($: CheerioAPI): PresenceResult {
     checks: {
       socialMediaLinks: socialResult,
       googlePresence: googleResult,
-      contentPresence: contentResult,
     },
   }
 }
@@ -183,104 +177,5 @@ function checkGoogleBusiness($: CheerioAPI): {
     passed,
     score,
     value: passed,
-  }
-}
-
-/**
- * Check for blog or content sections
- */
-function checkContentPresence($: CheerioAPI): {
-  passed: boolean
-  score: number
-  value: boolean
-} {
-  // Check for blog section
-  const blogSectionSelectors = [
-    // Common blog section selectors
-    'section.blog',
-    'div.blog',
-    '#blog',
-    '.blog-posts',
-    '.articles',
-    '.news',
-    // Common blog link selectors
-    'a[href*="blog"]',
-    'a[href*="articles"]',
-    'a[href*="news"]',
-    'a:contains("Blog")',
-    'a:contains("Articles")',
-    'a:contains("News")',
-  ]
-
-  // Check each selector
-  for (const selector of blogSectionSelectors) {
-    try {
-      if ($(selector).length > 0) {
-        return {
-          passed: true,
-          score: 100,
-          value: true,
-        }
-      }
-    } catch (e) {
-      // Some complex selectors might not be supported by Cheerio
-      // Just continue if there's an error
-      continue
-    }
-  }
-
-  // Look for heading elements containing blog/content related words
-  const contentHeadings = $('h1, h2, h3, h4').filter((_, el) => {
-    const text = $(el).text().toLowerCase()
-    return (
-      text.includes('blog') ||
-      text.includes('article') ||
-      text.includes('news') ||
-      text.includes('post') ||
-      text.includes('content') ||
-      text.includes('resource')
-    )
-  })
-
-  if (contentHeadings.length > 0) {
-    return {
-      passed: true,
-      score: 100,
-      value: true,
-    }
-  }
-
-  // Look for recent dates, which often indicate fresh content
-  const datePatterns = [
-    /\d{1,2}\/\d{1,2}\/\d{2,4}/, // MM/DD/YYYY
-    /\d{4}-\d{1,2}-\d{1,2}/, // YYYY-MM-DD
-    /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{1,2},?\s+\d{4}/i, // Month DD, YYYY
-    /\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{4}/i, // DD Month YYYY
-  ]
-
-  let hasDateElements = false
-  $('*').each((_, el) => {
-    const text = $(el).text()
-    for (const pattern of datePatterns) {
-      if (pattern.test(text)) {
-        hasDateElements = true
-        return false // Break each loop
-      }
-    }
-  })
-
-  // If dates were found, it's likely a content-rich site
-  if (hasDateElements) {
-    return {
-      passed: true,
-      score: 100,
-      value: true,
-    }
-  }
-
-  return {
-    passed: false,
-    score: 0,
-    value: false,
   }
 }

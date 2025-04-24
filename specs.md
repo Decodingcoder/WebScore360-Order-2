@@ -116,12 +116,10 @@ WebScore360 MVP - Detailed Specifications
     Pro Plan (**$9/mo** - Option for annual payment with 25% discount):
         Max 30 audits per month.
         Unlocks all Fix-It Guidance details ("What", "Why", "How") in the dashboard.
-        Placeholder: Maybe adds a non-functional "Action Tracker" tab for future dev.
 
     Business+ Plan (**$38/mo** - Option for annual payment with 25% discount):
         Unlimited audits per month.
         Includes all Pro features.
-        Placeholders: May add non-functional tabs/sections for "Competitor Benchmarks", "Priority Support", "Service Discounts".
 
     Upgrade Flow: Clicking "Upgrade" buttons initiates the Stripe/Paddle checkout flow. **The checkout should present both monthly and annual (with discount) options if applicable.** Integration in Next.js frontend and webhooks handled by a Supabase Edge Function or Render endpoint to update the user's subscription_tier in the DB.
 

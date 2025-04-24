@@ -1,7 +1,7 @@
 import { Job } from 'bull'
 import { logger } from '../utils/logger'
 import { supabase } from '../config/supabase'
-import { analyzeWebsite } from '../analysis/analyzer'
+import { analyzeWebsite, AnalysisResult } from '../analysis/analyzer'
 import { generatePdf } from '../pdf/generator'
 import { sendEmail } from '../services/mailer'
 
@@ -32,9 +32,72 @@ export async function processWebsiteAnalysis(job: Job<AnalysisJob>) {
     logger.info(`Saving analysis results for ${websiteUrl}`)
     await saveAnalysisResults(auditId, analysisResult)
 
+    // --- Fetch Subscription Tier --- START
+    let subscriptionTier: 'free' | 'pro' = 'free' // Default to free
+    try {
+      if (userEmail) {
+        // First find user by email (assuming email is unique in auth.users)
+        const { data: userData, error: userError } = await supabase
+          .from('users') // Assuming Supabase default auth table
+          .select('id')
+          .eq('email', userEmail)
+          .single()
+
+        if (userError && userError.code !== 'PGRST116') {
+          // PGRST116 = 0 rows found, which is okay
+          logger.warn(`Error fetching user ID for email ${userEmail}`, {
+            userError,
+          })
+        } else if (userData) {
+          // Now find profile by user_id
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('subscription_tier')
+            .eq('user_id', userData.id) // Link profile to user via user_id
+            .single()
+
+          if (profileError && profileError.code !== 'PGRST116') {
+            logger.warn(`Error fetching profile for user ${userData.id}`, {
+              profileError,
+            })
+          } else if (profileData && profileData.subscription_tier) {
+            const tier = profileData.subscription_tier.toLowerCase()
+            if (tier === 'pro' || tier === 'business_plus') {
+              // Treat business_plus as pro for PDF generation for now
+              subscriptionTier = 'pro'
+            }
+            logger.info(
+              `Found subscription tier '${profileData.subscription_tier}' for user ${userEmail}`
+            )
+          } else {
+            logger.info(
+              `No profile or tier found for user ${userEmail}, defaulting to free.`
+            )
+          }
+        } else {
+          logger.info(
+            `No user found for email ${userEmail}, defaulting to free.`
+          )
+        }
+      } else {
+        logger.warn(
+          `No userEmail provided for audit ${auditId}, defaulting to free tier.`
+        )
+      }
+    } catch (tierError) {
+      logger.error('Error fetching subscription tier', { tierError })
+      // Defaulting to 'free' anyway
+    }
+    logger.info(`Using tier '${subscriptionTier}' for PDF generation.`)
+    // --- Fetch Subscription Tier --- END
+
     // Step 3: Generate PDF report
     logger.info(`Generating PDF report for ${websiteUrl}`)
-    const { pdfBuffer, pdfUrl } = await generatePdf(websiteUrl, analysisResult)
+    const { pdfBuffer, pdfUrl } = await generatePdf(
+      websiteUrl,
+      analysisResult,
+      subscriptionTier // Pass the fetched tier
+    )
 
     // Step 4: Update database with PDF URL
     logger.info(`Updating audit with PDF URL: ${pdfUrl}`)
@@ -106,7 +169,7 @@ async function updateAuditStatus(
 /**
  * Save analysis results to the database
  */
-async function saveAnalysisResults(auditId: string, results: any) {
+async function saveAnalysisResults(auditId: string, results: AnalysisResult) {
   try {
     const { error } = await supabase
       .from('audits')
