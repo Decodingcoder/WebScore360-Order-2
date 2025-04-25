@@ -251,22 +251,6 @@ export default function PricingPage() {
                       d="M5 13l4 4L19 7"
                     ></path>
                   </svg>
-                  <span>Detailed score breakdown</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-6 w-6 text-green-500 mr-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M5 13l4 4L19 7"
-                    ></path>
-                  </svg>
                   <span>Comprehensive fix-it guidance</span>
                 </li>
                 <li className="flex items-start">
