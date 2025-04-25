@@ -10,15 +10,16 @@ const posts = [
   },
   {
     slug: 'seo-basics',
-    title: 'SEO Basics: How to Improve Your Website&apos;s Visibility',
+    title: "SEO Basics: How to Improve Your Website's Visibility",
     excerpt:
-      'Discover the fundamental SEO techniques that can help your website rank higher in search results.',
+      'Learn the fundamentals of SEO to help your website rank higher in search engines.',
+    date: '2023-11-15',
   },
   {
-    slug: 'conversion-optimization',
+    slug: 'turn-visitors-into-customers',
     title: 'Conversion Rate Optimization: Turn Visitors into Customers',
     excerpt:
-      'Learn proven strategies to increase your website&apos;s conversion rate and generate more leads and sales.',
+      "Learn proven strategies to increase your website's conversion rate and generate more leads and sales.",
   },
   {
     slug: 'branding-essentials',
