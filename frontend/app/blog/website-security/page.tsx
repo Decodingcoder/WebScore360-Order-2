@@ -6,7 +6,7 @@ export default function WebsiteSecurityPost() {
   return (
     <BlogPostLayout
       title="Website Security Essentials: Protecting Your Business Online"
-      date="April 5, 2024"
+      date="April 5, 2025"
     >
       <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
         Is your website secure? In an era of increasing cyber threats, website

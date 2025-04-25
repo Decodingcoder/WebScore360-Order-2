@@ -6,7 +6,7 @@ export default function PageSpeedPost() {
   return (
     <BlogPostLayout
       title="Why Page Speed Matters More Than Ever in 2023"
-      date="November 15, 2023"
+      date="November 15, 2024"
     >
       <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
         In the fast-paced digital world, website speed isn&apos;t just about

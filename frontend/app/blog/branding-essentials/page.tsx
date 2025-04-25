@@ -6,7 +6,7 @@ export default function BrandingEssentialsPost() {
   return (
     <BlogPostLayout
       title="Branding Essentials for Small Business Websites"
-      date="July 20, 2023"
+      date="July 20, 2024"
     >
       <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
         In today&apos;s digital landscape, your website is often the first

@@ -13,7 +13,7 @@ export default function ConversionRateOptimizationPost() {
   return (
     <BlogPostLayout
       title="Conversion Rate Optimization: Turn Visitors into Customers"
-      date="December 5, 2023"
+      date="December 5, 2024"
     >
       <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
         Your website might be attracting visitors, but are they taking the

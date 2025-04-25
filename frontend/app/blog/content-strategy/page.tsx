@@ -6,7 +6,7 @@ export default function ContentStrategyPost() {
   return (
     <BlogPostLayout
       title="Content Strategy: Creating Engaging Website Content That Converts"
-      date="January 22, 2024"
+      date="January 22, 2025"
     >
       <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
         When it comes to your website, content isn&apos;t just king—it&apos;s

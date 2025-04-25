@@ -9,11 +9,25 @@ const posts = [
       'A slow website frustrates visitors and hurts your bottom line. Learn common speed killers and how to fix them.',
   },
   {
+    slug: 'page-speed',
+    title: 'Why Page Speed Matters More Than Ever in 2023',
+    excerpt:
+      'In the fast-paced digital world, website speed is a critical factor that can make or break your online success. Learn why speed matters now more than ever.',
+    date: '2024-11-15',
+  },
+  {
     slug: 'seo-basics',
     title: "SEO Basics: How to Improve Your Website's Visibility",
     excerpt:
       'Learn the fundamentals of SEO to help your website rank higher in search engines.',
-    date: '2023-11-15',
+    date: '2024-11-15',
+  },
+  {
+    slug: 'seo-benefits',
+    title: 'How Website Performance Impacts Your SEO',
+    excerpt:
+      'Discover how your website performance directly affects your search engine rankings and what you can do to improve it.',
+    date: '2024-12-05',
   },
   {
     slug: 'turn-visitors-into-customers',
@@ -32,9 +46,37 @@ const posts = [
     title: 'Making Your Website Accessible: Why It Matters and How to Do It',
     excerpt:
       'Learn why web accessibility is crucial for your business and discover practical steps to make your website more inclusive for all users.',
-    date: '2023-12-05',
+    date: '2024-12-05',
   },
-  // Add more post metadata here as they are created
+  {
+    slug: 'mobile-optimization',
+    title:
+      'Mobile Optimization: Creating a Seamless Experience on Every Device',
+    excerpt:
+      'With most web traffic coming from mobile devices, learn how to optimize your website for the best mobile user experience.',
+    date: '2025-02-10',
+  },
+  {
+    slug: 'content-strategy',
+    title: 'Content Strategy: Creating Engaging Website Content That Converts',
+    excerpt:
+      'Discover how to develop a content strategy that transforms your website from a digital brochure into a powerful marketing and conversion tool.',
+    date: '2025-01-22',
+  },
+  {
+    slug: 'website-security',
+    title: 'Website Security Essentials: Protecting Your Business Online',
+    excerpt:
+      'Learn the fundamentals of website security and practical steps to protect your business from common online threats.',
+    date: '2025-04-05',
+  },
+  {
+    slug: 'analytics-essentials',
+    title: 'Web Analytics Essentials: Making Data-Driven Decisions',
+    excerpt:
+      'Learn how to use web analytics to understand your audience, track performance, and make informed decisions about your website.',
+    date: '2025-03-15',
+  },
 ]
 
 export default function BlogIndex() {

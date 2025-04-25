@@ -6,7 +6,7 @@ export default function WhySpeedMattersPost() {
   return (
     <BlogPostLayout
       title="Why Your Website Speed Matters (and How to Fix It!)"
-      date="June 15, 2023"
+      date="June 15, 2024"
     >
       <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
         Does your website feel slow? You&apos;re not alone. Many businesses

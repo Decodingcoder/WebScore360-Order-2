@@ -6,7 +6,7 @@ export default function AnalyticsEssentialsPost() {
   return (
     <BlogPostLayout
       title="Analytics Essentials: Using Data to Improve Your Website"
-      date="March 3, 2024"
+      date="March 3, 2025"
     >
       <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
         Are you making decisions about your website based on data or gut

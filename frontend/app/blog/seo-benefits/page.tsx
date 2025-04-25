@@ -6,7 +6,7 @@ export default function SEOBenefitsPost() {
   return (
     <BlogPostLayout
       title="How Website Performance Impacts Your SEO"
-      date="December 5, 2023"
+      date="December 5, 2024"
     >
       <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
         In today&apos;s digital landscape, search engine optimization (SEO)

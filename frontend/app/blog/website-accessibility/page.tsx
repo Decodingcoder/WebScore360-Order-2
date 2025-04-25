@@ -6,7 +6,7 @@ export default function WebsiteAccessibilityPost() {
   return (
     <BlogPostLayout
       title="Making Your Website Accessible: Why It Matters and How to Do It"
-      date="December 5, 2023"
+      date="December 5, 2024"
     >
       <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
         In today&apos;s digital world, having an accessible website isn&apos;t

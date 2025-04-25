@@ -420,7 +420,7 @@ export default function MobileOptimizationPost() {
         </li>
         <li>
           <strong>Priority+ navigation:</strong> Shows the most important items
-          and collapses others into a "more" menu.
+          and collapses others into a &quot;more&quot; menu.
         </li>
         <li>
           <strong>Floating action button:</strong> Prominent button for the

@@ -6,7 +6,7 @@ export default function SEOBasicsPost() {
   return (
     <BlogPostLayout
       title="SEO Basics: How to Improve Your Website's Visibility"
-      date="November 15, 2023"
+      date="November 15, 2024"
     >
       <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">
         Is your website invisible to potential customers? You&apos;re not alone.
