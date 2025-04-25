@@ -345,7 +345,8 @@ export default function Dashboard() {
                 audits remaining this month
               </p>
             </div>
-            {subscription !== 'business_plus' && (
+            {/* --- HIDE BUTTON IF PRO OR BUSINESS+ --- */}
+            {subscription !== 'business_plus' && subscription !== 'pro' && (
               <Button
                 variant="default"
                 className="bg-blue-600 hover:bg-blue-700"
