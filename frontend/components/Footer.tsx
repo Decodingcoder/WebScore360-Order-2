@@ -26,22 +26,6 @@ export function Footer() {
                   Blog
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/guides"
-                  className="text-gray-600 dark:text-gray-300 hover:underline"
-                >
-                  Free Guides
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/case-studies"
-                  className="text-gray-600 dark:text-gray-300 hover:underline"
-                >
-                  Case Studies
-                </Link>
-              </li>
             </ul>
           </div>
 
