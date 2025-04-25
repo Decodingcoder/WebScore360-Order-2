@@ -27,6 +27,13 @@ const posts = [
     excerpt:
       'Build a strong brand identity online with these essential branding elements for your small business website.',
   },
+  {
+    slug: 'website-accessibility',
+    title: 'Making Your Website Accessible: Why It Matters and How to Do It',
+    excerpt:
+      'Learn why web accessibility is crucial for your business and discover practical steps to make your website more inclusive for all users.',
+    date: '2023-12-05',
+  },
   // Add more post metadata here as they are created
 ]
 
