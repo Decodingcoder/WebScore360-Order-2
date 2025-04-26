@@ -156,7 +156,9 @@ async function fetchWebsite(
   try {
     const response = await axios.get(url, {
       headers: {
-        'User-Agent': 'WebScore360 Audit Bot/1.0',
+        // Mimic a common browser User-Agent
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36',
         Accept: 'text/html,application/xhtml+xml,application/xml',
       },
       maxRedirects: 5,
