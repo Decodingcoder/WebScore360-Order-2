@@ -32,7 +32,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-12 relative">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Analyze Your Website In Minutes
+              Analyze Your Website In Seconds
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300">
               Get a comprehensive score across performance, SEO, conversion,
