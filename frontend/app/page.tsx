@@ -307,7 +307,7 @@ export default function Home() {
                   </CardContent>
                 </Card>
 
-                {/* Business+ Plan */}
+                {/* Business+ Plan (Inactive) */}
                 <Card className="transition-transform hover:scale-105 overflow-hidden bg-white dark:bg-gray-800">
                   <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/40 dark:to-pink-900/40">
                     <h3 className="text-2xl font-bold">Business+</h3>
@@ -393,8 +393,12 @@ export default function Home() {
                         <span>Priority support & consultations</span>
                       </li>
                     </ul>
-                    <Button className="w-full mt-8" variant="secondary" asChild>
-                      <Link href="/login">Get Business+</Link>
+                    <Button
+                      className="w-full mt-8"
+                      variant="secondary"
+                      disabled
+                    >
+                      Coming Soon
                     </Button>
                   </CardContent>
                 </Card>
