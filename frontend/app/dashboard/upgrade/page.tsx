@@ -291,52 +291,50 @@ function UpgradePageContent() {
                       <li>Unlock all Fix-It Guidance details</li>
                     </ul>
                   </CardContent>
-                  <CardFooter className="flex flex-col sm:flex-row gap-2">
+                  <CardFooter className="flex flex-col gap-2 w-full">
                     {/* --- HIDE BUTTONS IF ALREADY PRO --- */}
                     {subscription !== 'pro' && (
                       <>
-                        <div className="space-y-2">
-                          {/* Monthly Pro */}
-                          <Button
-                            onClick={() =>
-                              openConfirmationDialog({
-                                priceId: PRICE_IDS.pro.monthly,
-                                planName: 'Pro',
-                                priceText: '$9/month',
-                                isYearly: false,
-                              })
-                            }
-                            disabled={isProcessing !== null}
-                            className="w-full"
-                          >
-                            {isProcessing === PRICE_IDS.pro.monthly
-                              ? 'Processing...'
-                              : '$9/month'}
-                          </Button>
-                          {/* Yearly Pro */}
-                          <Button
-                            onClick={() =>
-                              openConfirmationDialog({
-                                priceId: PRICE_IDS.pro.yearly,
-                                planName: 'Pro (Annual)',
-                                priceText: 'Billed Annually (Save 25%)',
-                                isYearly: true,
-                              })
-                            }
-                            disabled={isProcessing !== null}
-                            className="w-full"
-                            variant="outline"
-                          >
-                            {isProcessing === PRICE_IDS.pro.yearly
-                              ? 'Processing...'
-                              : 'Pay Annually & Save 25%'}
-                          </Button>
-                        </div>
+                        {/* Monthly Pro */}
+                        <Button
+                          onClick={() =>
+                            openConfirmationDialog({
+                              priceId: PRICE_IDS.pro.monthly,
+                              planName: 'Pro',
+                              priceText: '$9/month',
+                              isYearly: false,
+                            })
+                          }
+                          disabled={isProcessing !== null}
+                          className="w-full"
+                        >
+                          {isProcessing === PRICE_IDS.pro.monthly
+                            ? 'Processing...'
+                            : '$9/month'}
+                        </Button>
+                        {/* Yearly Pro */}
+                        <Button
+                          onClick={() =>
+                            openConfirmationDialog({
+                              priceId: PRICE_IDS.pro.yearly,
+                              planName: 'Pro (Annual)',
+                              priceText: 'Billed Annually (Save 25%)',
+                              isYearly: true,
+                            })
+                          }
+                          disabled={isProcessing !== null}
+                          className="w-full"
+                          variant="outline"
+                        >
+                          {isProcessing === PRICE_IDS.pro.yearly
+                            ? 'Processing...'
+                            : 'Pay Annually & Save 25%'}
+                        </Button>
                       </>
                     )}
                     {/* Show 'Current Plan' if user is on Pro */}
                     {subscription === 'pro' && (
-                      <p className="text-sm font-medium text-green-600 dark:text-green-400 w-full text-center sm:text-left">
+                      <p className="text-sm font-medium text-green-600 dark:text-green-400 w-full text-center">
                         Your Current Plan
                       </p>
                     )}
@@ -356,12 +354,8 @@ function UpgradePageContent() {
                     <li>Unlimited audits per month</li>
                     <li>Competitor analysis</li>
                   </ul>
-                  {/* --- REPLACED BUTTONS WITH COMING SOON LABEL --- */}
-                  <p className="text-sm font-medium text-muted-foreground w-full text-center">
-                    Coming soon
-                  </p>
                 </CardContent>
-                <CardFooter className="flex flex-col sm:flex-row gap-2">
+                <CardFooter className="flex flex-col gap-2 w-full">
                   <p className="text-sm font-medium text-muted-foreground w-full text-center">
                     Coming soon
                   </p>
