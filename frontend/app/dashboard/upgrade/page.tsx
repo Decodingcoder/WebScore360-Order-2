@@ -1,7 +1,13 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -284,52 +290,55 @@ function UpgradePageContent() {
                       <li>30 audits per month</li>
                       <li>Unlock all Fix-It Guidance details</li>
                     </ul>
-                    <div className="space-y-2">
-                      {/* Monthly Pro */}
-                      <Button
-                        onClick={() =>
-                          openConfirmationDialog({
-                            priceId: PRICE_IDS.pro.monthly,
-                            planName: 'Pro',
-                            priceText: '$9/month',
-                            isYearly: false,
-                          })
-                        }
-                        disabled={
-                          isProcessing !== null || subscription === 'pro' // Disable if processing OR already on Pro
-                        }
-                        className="w-full"
-                      >
-                        {isProcessing === PRICE_IDS.pro.monthly
-                          ? 'Processing...'
-                          : subscription === 'pro' // Show current plan if on Pro
-                          ? 'Current Plan'
-                          : '$9/month'}
-                      </Button>
-                      {/* Yearly Pro */}
-                      <Button
-                        onClick={() =>
-                          openConfirmationDialog({
-                            priceId: PRICE_IDS.pro.yearly,
-                            planName: 'Pro (Annual)',
-                            priceText: 'Billed Annually (Save 25%)',
-                            isYearly: true,
-                          })
-                        }
-                        disabled={
-                          isProcessing !== null || subscription === 'pro' // Disable if processing OR already on Pro
-                        }
-                        className="w-full"
-                        variant="outline"
-                      >
-                        {isProcessing === PRICE_IDS.pro.yearly
-                          ? 'Processing...'
-                          : subscription === 'pro' // Show current plan if on Pro
-                          ? 'Current Plan'
-                          : 'Pay Annually & Save 25%'}
-                      </Button>
-                    </div>
                   </CardContent>
+                  <CardFooter className="flex flex-col sm:flex-row gap-2">
+                    {/* --- HIDE BUTTONS IF ALREADY PRO --- */}
+                    {subscription !== 'pro' && (
+                      <>
+                        <Button
+                          className="w-full sm:w-auto flex-1"
+                          disabled={isProcessing === PRICE_IDS.pro.monthly}
+                          onClick={() =>
+                            openConfirmationDialog({
+                              priceId: PRICE_IDS.pro.monthly,
+                              planName: 'Pro Monthly',
+                              priceText: '$19/month',
+                              isYearly: false,
+                            })
+                          }
+                        >
+                          {isProcessing === PRICE_IDS.pro.monthly ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : null}
+                          Upgrade (Monthly)
+                        </Button>
+                        <Button
+                          className="w-full sm:w-auto flex-1"
+                          variant="outline"
+                          disabled={isProcessing === PRICE_IDS.pro.yearly}
+                          onClick={() =>
+                            openConfirmationDialog({
+                              priceId: PRICE_IDS.pro.yearly,
+                              planName: 'Pro Yearly',
+                              priceText: '$190/year',
+                              isYearly: true,
+                            })
+                          }
+                        >
+                          {isProcessing === PRICE_IDS.pro.yearly ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : null}
+                          Upgrade (Yearly)
+                        </Button>
+                      </>
+                    )}
+                    {/* Show 'Current Plan' if user is on Pro */}
+                    {subscription === 'pro' && (
+                      <p className="text-sm font-medium text-green-600 dark:text-green-400 w-full text-center sm:text-left">
+                        Your Current Plan
+                      </p>
+                    )}
+                  </CardFooter>
                 </Card>
               )}
 
@@ -345,11 +354,12 @@ function UpgradePageContent() {
                     <li>Unlimited audits per month</li>
                     <li>Competitor analysis</li>
                   </ul>
-                  {/* --- REPLACED BUTTONS WITH COMING SOON LABEL --- */}
+                </CardContent>
+                <CardFooter className="flex flex-col sm:flex-row gap-2">
                   <p className="text-sm font-medium text-muted-foreground w-full text-center">
                     Coming soon
                   </p>
-                </CardContent>
+                </CardFooter>
               </Card>
             </CardContent>
           </Card>
