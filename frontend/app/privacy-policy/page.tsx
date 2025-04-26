@@ -1,7 +1,6 @@
 import { Footer } from '@/components/Footer'
+import { Header } from '@/components/layout/Header'
 import { Metadata } from 'next'
-import Image from 'next/image'
-import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | WebScore360',
@@ -11,27 +10,9 @@ export const metadata: Metadata = {
 export default function PrivacyPolicy() {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="container mx-auto py-6 px-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/logo.png"
-            alt="WebScore360 Logo"
-            width={100}
-            height={40}
-            className="h-10 w-auto"
-          />
-        </Link>
-        <nav className="flex gap-4">
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-          >
-            Login
-          </Link>
-        </nav>
-      </header>
+      <Header />
 
-      <main className="flex-1 container mx-auto px-4 py-12">
+      <main className="flex-1 pt-28 container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-8 text-center">
             Privacy Policy

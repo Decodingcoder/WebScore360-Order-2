@@ -405,7 +405,7 @@ export default function Home() {
                   Need a custom solution for your agency or enterprise?
                 </p>
                 <Button variant="link" asChild className="mt-2">
-                  <a href="mailto:sales@webscore360.com">
+                  <a href="mailto:webscore360@gmail.com">
                     Contact our sales team →
                   </a>
                 </Button>

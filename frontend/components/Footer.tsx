@@ -43,7 +43,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:sales@webscore360.com"
+                  href="mailto:webscore360@gmail.com"
                   className="text-gray-600 dark:text-gray-300 hover:underline"
                 >
                   Contact

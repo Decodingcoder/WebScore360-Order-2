@@ -1,8 +1,8 @@
 'use client'
 
 import { Footer } from '@/components/Footer'
+import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/button'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -13,24 +13,9 @@ export default function PricingPage() {
 
   return (
     <div className="relative isolate overflow-hidden bg-gray-50 dark:bg-gray-900">
-      <header className="container mx-auto py-6 px-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/logo.png"
-            alt="WebScore360 Logo"
-            width={100}
-            height={40}
-            className="h-10 w-auto"
-          />
-        </Link>
-        <nav className="flex gap-4">
-          <Button asChild variant="outline">
-            <Link href="/login">Login</Link>
-          </Button>
-        </nav>
-      </header>
+      <Header />
 
-      <main className="flex-1 container mx-auto px-4 py-12">
+      <main className="flex-1 pt-28 container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             Choose Your Plan
