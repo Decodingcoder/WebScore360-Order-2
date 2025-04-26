@@ -87,9 +87,8 @@ export default function AuthForm() {
           <Alert className="mb-4">
             <AlertTitle>Report Processing</AlertTitle>
             <AlertDescription>
-              Your website analysis report is being generated. Please sign in or
-              create an account to view it in your dashboard once it&apos;s
-              ready.
+              Your report is on the way. Please sign in or create an account to
+              view it in your dashboard right away.
             </AlertDescription>
           </Alert>
         )}
