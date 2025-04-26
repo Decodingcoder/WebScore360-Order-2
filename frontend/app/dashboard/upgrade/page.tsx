@@ -295,41 +295,43 @@ function UpgradePageContent() {
                     {/* --- HIDE BUTTONS IF ALREADY PRO --- */}
                     {subscription !== 'pro' && (
                       <>
-                        <Button
-                          className="w-full sm:w-auto flex-1"
-                          disabled={isProcessing === PRICE_IDS.pro.monthly}
-                          onClick={() =>
-                            openConfirmationDialog({
-                              priceId: PRICE_IDS.pro.monthly,
-                              planName: 'Pro Monthly',
-                              priceText: '$19/month',
-                              isYearly: false,
-                            })
-                          }
-                        >
-                          {isProcessing === PRICE_IDS.pro.monthly ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : null}
-                          Upgrade (Monthly)
-                        </Button>
-                        <Button
-                          className="w-full sm:w-auto flex-1"
-                          variant="outline"
-                          disabled={isProcessing === PRICE_IDS.pro.yearly}
-                          onClick={() =>
-                            openConfirmationDialog({
-                              priceId: PRICE_IDS.pro.yearly,
-                              planName: 'Pro Yearly',
-                              priceText: '$190/year',
-                              isYearly: true,
-                            })
-                          }
-                        >
-                          {isProcessing === PRICE_IDS.pro.yearly ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : null}
-                          Upgrade (Yearly)
-                        </Button>
+                        <div className="space-y-2">
+                          {/* Monthly Pro */}
+                          <Button
+                            onClick={() =>
+                              openConfirmationDialog({
+                                priceId: PRICE_IDS.pro.monthly,
+                                planName: 'Pro',
+                                priceText: '$9/month',
+                                isYearly: false,
+                              })
+                            }
+                            disabled={isProcessing !== null}
+                            className="w-full"
+                          >
+                            {isProcessing === PRICE_IDS.pro.monthly
+                              ? 'Processing...'
+                              : '$9/month'}
+                          </Button>
+                          {/* Yearly Pro */}
+                          <Button
+                            onClick={() =>
+                              openConfirmationDialog({
+                                priceId: PRICE_IDS.pro.yearly,
+                                planName: 'Pro (Annual)',
+                                priceText: 'Billed Annually (Save 25%)',
+                                isYearly: true,
+                              })
+                            }
+                            disabled={isProcessing !== null}
+                            className="w-full"
+                            variant="outline"
+                          >
+                            {isProcessing === PRICE_IDS.pro.yearly
+                              ? 'Processing...'
+                              : 'Pay Annually & Save 25%'}
+                          </Button>
+                        </div>
                       </>
                     )}
                     {/* Show 'Current Plan' if user is on Pro */}
@@ -354,6 +356,10 @@ function UpgradePageContent() {
                     <li>Unlimited audits per month</li>
                     <li>Competitor analysis</li>
                   </ul>
+                  {/* --- REPLACED BUTTONS WITH COMING SOON LABEL --- */}
+                  <p className="text-sm font-medium text-muted-foreground w-full text-center">
+                    Coming soon
+                  </p>
                 </CardContent>
                 <CardFooter className="flex flex-col sm:flex-row gap-2">
                   <p className="text-sm font-medium text-muted-foreground w-full text-center">
