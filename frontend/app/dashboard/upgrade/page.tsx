@@ -42,12 +42,12 @@ interface PlanDetails {
 // Price IDs from your Stripe setup - Replace with your actual IDs if different
 const PRICE_IDS = {
   pro: {
-    monthly: 'price_1RFv78E1IagRhapRcD1Q0VEH',
-    yearly: 'price_1RFv9WE1IagRhapRqmnSHDbe',
+    monthly: 'price_1RHy68E1IagRhapRXW3hq88b',
+    yearly: 'price_1RHy68E1IagRhapR6tVjwEXZ',
   },
   business_plus: {
-    monthly: 'price_1RFv8nE1IagRhapRHu52AqJJ',
-    yearly: 'price_1RFv8nE1IagRhapRE1argYKQ',
+    monthly: 'price_1RHy63E1IagRhapRLmpVQtax',
+    yearly: 'price_1RHy63E1IagRhapR3rDMc10S',
   },
 }
 

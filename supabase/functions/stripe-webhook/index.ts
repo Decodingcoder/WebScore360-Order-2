@@ -14,11 +14,11 @@ console.log('Stripe webhook handler function initialized')
 // Define Price IDs from your Stripe setup
 const PRICE_ID_MAP = {
   // Business+ Plans
-  price_1RFv8nE1IagRhapRE1argYKQ: 'business_plus', // Yearly
-  price_1RFv8nE1IagRhapRHu52AqJJ: 'business_plus', // Monthly
+  price_1RHy63E1IagRhapR3rDMc10S: 'business_plus', // Yearly
+  price_1RHy63E1IagRhapRLmpVQtax: 'business_plus', // Monthly
   // Pro Plans
-  price_1RFv9WE1IagRhapRqmnSHDbe: 'pro', // Yearly
-  price_1RFv78E1IagRhapRcD1Q0VEH: 'pro', // Monthly
+  price_1RHy68E1IagRhapR6tVjwEXZ: 'pro', // Yearly
+  price_1RHy68E1IagRhapRXW3hq88b: 'pro', // Monthly
 }
 
 // Initialize Stripe client
