@@ -1,3 +1,13 @@
+if (!process.env.STRIPE_SECRET_KEY) {
+  // Prevent this file from throwing at build time if STRIPE_SECRET_KEY is missing
+  export default function handler(req, res) {
+    res.status(200).json({ message: 'Stripe disabled for staging' });
+  }
+  return;
+}
+
+
+
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/server' // We'll create this helper next
 import { getURL } from '@/lib/helpers' // Helper to construct absolute URLs
