@@ -1,3 +1,5 @@
+// frontend/app/layout.tsx
+
 import { Toaster } from '@/components/ui/toaster'
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
@@ -32,6 +34,60 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+
+
+
+      {/* ── INSERTION OF PIXEL & GA4 SNIPPETS START ── */}
+      <head>
+        {/* ─── Meta Pixel START ─── */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+              n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)
+              }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init', '1049772167003178');
+              fbq('track', 'PageView');
+            `,
+          }}
+        />
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: 'none' }}
+            src="https://www.facebook.com/tr?id=1049772167003178&ev=PageView&noscript=1"
+          />
+        </noscript>
+        {/* ─── Meta Pixel END ─── */}
+
+
+
+        {/* ─── Google Analytics (GA4) START ─── */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-ZE4YVY4HV4"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-ZE4YVY4HV4');
+            `,
+          }}
+        />
+        {/* ─── Google Analytics (GA4) END ─── */}
+      </head>
+
+
+
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100`}
       >
