@@ -2,7 +2,8 @@
 
 import { NextResponse } from 'next/server'
 
-// Temporarily bypass Stripe logic so build won’t fail:
+// This dummy handler prevents build-time errors by avoiding any Stripe calls.
 export async function POST(request: Request) {
-  return NextResponse.json({ message: 'Stripe route disabled for staging.' })
+  // Return a simple JSON payload instead of invoking Stripe.
+  return NextResponse.json({ message: 'Stripe is temporarily disabled for staging.' })
 }
