@@ -1,7 +1,4 @@
-export const dynamic = 'force-dynamic';
-
-
-
+/*
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/server' // We'll create this helper next
 import { getURL } from '@/lib/helpers' // Helper to construct absolute URLs
@@ -100,3 +97,4 @@ export async function POST(request: Request) {
     })
   }
 }  // <— Add this closing brace to end the POST function
+*/
