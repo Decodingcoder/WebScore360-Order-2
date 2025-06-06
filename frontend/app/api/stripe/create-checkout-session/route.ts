@@ -95,3 +95,4 @@ export async function POST(request: Request) {
       status: 500,
     })
   }
+}  // <— Add this closing brace to end the POST function
