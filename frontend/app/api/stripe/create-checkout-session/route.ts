@@ -1,9 +1,8 @@
-// frontend/app/api/stripe/create-checkout-session/route.ts
+// frontend/app/api/stripe/update-subscription/route.ts
 
 import { NextResponse } from 'next/server'
 
-// This dummy handler prevents build-time errors by avoiding any Stripe calls.
+// Temporarily bypass Stripe for update-subscription so build succeeds
 export async function POST(request: Request) {
-  // Return a simple JSON payload instead of invoking Stripe.
-  return NextResponse.json({ message: 'Stripe is temporarily disabled for staging.' })
+  return NextResponse.json({ message: 'Update‐subscription disabled for staging.' })
 }
