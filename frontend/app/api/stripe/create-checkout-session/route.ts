@@ -1,19 +1,32 @@
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/server' // We'll create this helper next
 import { getURL } from '@/lib/helpers' // Helper to construct absolute URLs
-import { createClient } from '@/utils/supabase/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+
+
+
+
+// ── Add these env-var bindings ───────────────────────────────────────────
+const supabaseUrl       = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey   = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseRoleKey   = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const stripeSecretKey   = process.env.STRIPE_SECRET_KEY!
+
 
 export async function POST(request: Request) {
-  console.log('API Route: /api/stripe/create-checkout-session hit') // Log entry
   const { priceId } = await request.json()
+if (!priceId) {
+  console.error('Missing priceId in request body')
+  return new NextResponse('Missing priceId', { status: 400 })
+}
+  // …
+  const supabase = createServerClient(
+    supabaseUrl,
+    supabaseAnonKey,
+    { cookies: await cookies() }
+  )
 
-  if (!priceId) {
-    console.error('API Route Error: Missing priceId')
-    return new NextResponse('Missing priceId', { status: 400 })
-  }
-
-  // Create Supabase client for Route Handler
-  const supabase = await createClient()
 
   console.log('API Route: Attempting to get user...') // Log before getUser
   const {
@@ -57,6 +70,16 @@ export async function POST(request: Request) {
     // If no customer ID exists, create one in Stripe (optional, Checkout can create one too)
     // For simplicity, we let Checkout create the customer if needed,
     // using the email and associating it later via webhook.
+
+    console.log('💥 create-checkout-session route hit')
+    const body = await request.json()
+    console.log('POST Body:', body)
+const priceId = body.priceId
+
+if (!priceId) {
+  console.error('Missing priceId in request body')
+  return new NextResponse('Missing priceId', { status: 400 })
+}
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
