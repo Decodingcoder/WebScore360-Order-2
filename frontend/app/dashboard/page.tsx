@@ -1,5 +1,6 @@
 'use client'
 
+import { loadStripe } from '@stripe/stripe-js'
 import AnalyzeForm from '@/components/dashboard/AnalyzeForm'
 import AuditStatusPoller from '@/components/dashboard/AuditStatusPoller'
 import ScoreCard from '@/components/dashboard/ScoreCard'
@@ -80,6 +81,25 @@ export default function Dashboard() {
   const searchParams = useSearchParams()
   const [showUpgradeSuccessDialog, setShowUpgradeSuccessDialog] =
     useState(false)
+
+    // ── STEP 1: Add handleUpgrade function here ──
+    async function handleUpgrade() {
+      try {
+        const res = await fetch('/api/stripe/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ priceId: 'price_1Ng5hdFnbo…' }),
+        })
+        if (!res.ok) throw new Error(await res.text())
+
+          const { sessionId } = await res.json()
+          const stripeJs = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+          await stripeJs!.redirectToCheckout({ sessionId })
+        } catch (err) {
+          console.error('Upgrade flow error', err)
+          alert('Sorry, could not start checkout.')
+        }
+    }
 
   useEffect(() => {
     if (searchParams.get('upgraded') === 'true') {
@@ -345,16 +365,19 @@ export default function Dashboard() {
                 audits remaining this month
               </p>
             </div>
-            {/* --- HIDE BUTTON IF PRO OR BUSINESS+ --- */}
-            {subscription !== 'business_plus' && subscription !== 'pro' && (
-              <Button
+
+              {/* --- SHOW UPGRADE IF FREE --- */}
+              {subscription !== 'business_plus' && subscription !== 'pro' && (
+                <Button
                 variant="default"
                 className="bg-blue-600 hover:bg-blue-700"
-                asChild
-              >
-                <Link href="/dashboard/upgrade">Upgrade Plan</Link>
-              </Button>
-            )}
+                onClick={handleUpgrade}
+                >
+                Upgrade Plan
+                </Button>
+              )}
+          
+
           </div>
         </CardContent>
       </Card>
