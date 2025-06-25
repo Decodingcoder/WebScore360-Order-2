@@ -7,7 +7,7 @@ import {
   SupabaseClient,
 } from 'https://esm.sh/@supabase/supabase-js@2'
 // Import Stripe library
-import Stripe from 'https://esm.sh/stripe@14.10.0?target=deno' // Updated Stripe version, removed explicit deno-std
+import Stripe from 'https://esm.sh/stripe@11.17.0?target=deno' // Updated Stripe version, removed explicit deno-std
 
 console.log('Stripe webhook handler function initialized')
 
