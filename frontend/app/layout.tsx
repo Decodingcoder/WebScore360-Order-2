@@ -1,6 +1,7 @@
-// frontend/app/layout.tsx
+'use client' // 🔧 Required for using hooks
 
 import Script from 'next/script'
+import { usePathname } from 'next/navigation' // 🔧 Import usePathname
 
 import { Toaster } from '@/components/ui/toaster'
 import type { Metadata } from 'next'
@@ -34,62 +35,64 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const pathname = usePathname() // 🔧 Get current path
+  const baseUrl = 'https://webscore360.io' // 🔧 Your actual domain
+  const canonicalUrl = `${baseUrl}${pathname === '/' ? '' : pathname}`
+
   return (
     <html lang="en">
+      <head>
+        {/* 🔧 Canonical tag injection */}
+        <link rel="canonical" href={canonicalUrl} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100`}
       >
-
-
-
         {/* ── Meta Pixel & GA4 ── */}
-<Script
-  id="fb-pixel"
-  strategy="afterInteractive"
-  dangerouslySetInnerHTML={{
-    __html: `
-      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){
-      n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n; n.push=n; n.loaded=!0; n.version='2.0';
-      n.queue=[]; t=b.createElement(e); t.async=!0;
-      t.src=v; s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init','1049772167003178');
-      fbq('track','PageView');
-    `,
-  }}
-/>
-<noscript>
-  <img
-    height="1"
-    width="1"
-    style={{ display: 'none' }}
-    src="https://www.facebook.com/tr?id=1049772167003178&ev=PageView&noscript=1"
-    alt="fb-pixel"
-  />
-</noscript>
+        <Script
+          id="fb-pixel"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){
+              n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n; n.push=n; n.loaded=!0; n.version='2.0';
+              n.queue=[]; t=b.createElement(e); t.async=!0;
+              t.src=v; s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              'https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init','1049772167003178');
+              fbq('track','PageView');
+            `,
+          }}
+        />
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: 'none' }}
+            src="https://www.facebook.com/tr?id=1049772167003178&ev=PageView&noscript=1"
+            alt="fb-pixel"
+          />
+        </noscript>
 
-<Script
-  id="ga4-base"
-  strategy="afterInteractive"
-  src="https://www.googletagmanager.com/gtag/js?id=G-ZE4YVY4HV4"
-/>
-<Script
-  id="ga4-init"
-  strategy="afterInteractive"
-  dangerouslySetInnerHTML={{
-    __html: `
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config','G-ZE4YVY4HV4');
-    `,
-  }}
-/>
-
-
-
+        <Script
+          id="ga4-base"
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-ZE4YVY4HV4"
+        />
+        <Script
+          id="ga4-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config','G-ZE4YVY4HV4');
+            `,
+          }}
+        />
 
         <Providers>{children}</Providers>
         <Toaster />
