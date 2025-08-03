@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     apple: '/favicon.png',
   },
   alternates: {
-    canonical: 'https://webscore360.io',
+    canonical: 'web-score360-order-2.vercel.app',
   },
 }
 
