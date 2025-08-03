@@ -27,6 +27,9 @@ export const metadata: Metadata = {
     icon: '/favicon.png',
     apple: '/favicon.png',
   },
+  alternates: {
+    canonical: 'https://webscore360.io',
+  },
 }
 
 export default function RootLayout({
