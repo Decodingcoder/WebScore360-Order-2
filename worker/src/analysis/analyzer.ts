@@ -1,4 +1,3 @@
-import axios from 'axios'
 import * as cheerio from 'cheerio'
 import { analyzePerformance } from './performance'
 import { analyzeSeo } from './seo'
@@ -6,6 +5,7 @@ import { analyzeConversion } from './conversion'
 import { analyzeBranding } from './branding'
 import { analyzePresence } from './presence'
 import { logger } from '../utils/logger'
+import { fetchWithScraperFallback } from '../utils/fetchWithScraperFallback'
 
 // Assuming interfaces are defined correctly in each module
 // We might need to import specific types if not globally available
@@ -154,20 +154,15 @@ async function fetchWebsite(
   url: string
 ): Promise<{ html: string; finalUrl: string }> {
   try {
-    const response = await axios.get(url, {
-      headers: {
-        // Mimic a common browser User-Agent
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml',
-      },
-      maxRedirects: 5,
-      timeout: 30000, // 30 seconds timeout
-    })
+    const response = await fetchWithScraperFallback(url)
+
+    // Use original URL if final one is not available (e.g., on error)
+    const finalUrl =
+      response?.request?.res?.responseUrl || response?.config?.url || url
 
     return {
       html: response.data,
-      finalUrl: response.request.res.responseUrl || url, // Get the final URL after redirects
+      finalUrl,
     }
   } catch (error) {
     logger.error(`Failed to fetch website ${url}`, { error })

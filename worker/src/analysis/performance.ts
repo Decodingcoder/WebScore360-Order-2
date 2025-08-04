@@ -1,6 +1,7 @@
 import axios from 'axios'
 import https from 'https'
 import { logger } from '../utils/logger'
+import { fetchWithScraperFallback } from '../utils/fetchWithScraperFallback'
 
 export interface PerformanceResult {
   score: number
@@ -44,6 +45,7 @@ export async function analyzePerformance(
   }
 }
 
+
 /**
  * Get Page Speed score from Google PageSpeed Insights API
  */
@@ -62,7 +64,7 @@ async function analyzePageSpeed(
       url
     )}&strategy=mobile&key=${apiKey}`
 
-    const response = await axios.get(apiUrl, { timeout: 60000 })
+    const response = await fetchWithScraperFallback(apiUrl)
 
     if (
       !response.data ||
@@ -96,20 +98,17 @@ async function checkHttps(
   url: string
 ): Promise<{ score: number; passed: boolean }> {
   try {
-    // Check if URL uses HTTPS
     const isHttps = url.startsWith('https://')
 
     if (!isHttps) {
       return { score: 0, passed: false }
     }
 
-    // Verify certificate by making a request
     const result = await new Promise<boolean>((resolve) => {
       const req = https.request(
         url,
         { method: 'HEAD', timeout: 10000 },
         (res) => {
-          // Request succeeded, certificate is valid
           resolve(true)
         }
       )
