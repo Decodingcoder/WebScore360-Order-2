@@ -65,31 +65,28 @@ async function analyzePageSpeed(
     )}&strategy=mobile&key=${apiKey}`
 
     const response = await fetchWithScraperFallback(apiUrl)
+    console.log(`[ScraperAPI Debug] URL: ${url} | Status: ${response.status}`)
 
     if (
-      !response.data ||
-      !response.data.lighthouseResult ||
-      !response.data.lighthouseResult.categories ||
-      !response.data.lighthouseResult.categories.performance
+      !response.data?.lighthouseResult?.categories?.performance
     ) {
       logger.warn(`Invalid response from PageSpeed API for ${url}`)
       return { score: 50, passed: false, value: 50 }
     }
 
-    // Get the score (0-1) and convert to 0-100
     const score = Math.round(
       response.data.lighthouseResult.categories.performance.score * 100
     )
 
-    // Score is a pass if >= 80
     const passed = score >= 80
 
     return { score, passed, value: score }
   } catch (error) {
     logger.error(`Error analyzing PageSpeed for ${url}`, { error })
-    return { score: 50, passed: false, value: 50 } // Default score on error
+    return { score: 50, passed: false, value: 50 }
   }
 }
+
 
 /**
  * Check if a URL uses HTTPS with a valid certificate
